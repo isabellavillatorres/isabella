@@ -1,0 +1,3279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoTrip - Protótipo Mobile Hi-Fi com Microinterações Acessíveis</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      /* Palette tuned for high contrast (WCAG AAA compliant for text) */
+      --bg-dark: #090d16;
+      --card-bg: #162032;
+      --card-border: #2d3e58;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent-green: #34d399;
+      --accent-orange: #fb923c;
+      --accent-purple: #c084fc;
+      --text-main: #ffffff;
+      --text-muted: #cbd5e1;
+      --focus-ring: #fbbf24;
+      --touch-min: 48px;
+      --font-scale: 1rem;
+    }
+
+    /* High contrast theme class */
+    body.high-contrast {
+      --bg-dark: #000000;
+      --card-bg: #111111;
+      --card-border: #ffffff;
+      --primary: #ffff00;
+      --primary-hover: #e6e600;
+      --accent-green: #00ff00;
+      --accent-orange: #ff9900;
+      --accent-purple: #ff00ff;
+      --text-main: #ffffff;
+      --text-muted: #ffffff;
+      --focus-ring: #00ffff;
+    }
+
+    /* Dyslexia friendly typography class */
+    body.dyslexic-font * {
+      font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif !important;
+      letter-spacing: 0.05em;
+      word-spacing: 0.1em;
+    }
+
+    /* Reduce motion class */
+    body.reduce-motion * {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      font-size: var(--font-scale);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+    }
+
+    *:focus-visible {
+      outline: 3px solid var(--focus-ring) !important;
+      outline-offset: 3px !important;
+      border-radius: 6px;
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .control-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      min-height: 38px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* MICROINTERACTION: Button press spring elasticity */
+    .control-btn:active, .btn-primary:active, .nav-btn:active, .card-interactive:active, .chip-filter:active {
+      transform: scale(0.95);
+    }
+
+    .control-btn:hover, .control-btn.active {
+      background: var(--primary);
+      color: #020617;
+      border-color: var(--primary);
+    }
+
+    .badge-a11y {
+      background: #fbbf24;
+      color: #020617;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+
+    .phone-wrapper {
+      width: 100%;
+      max-width: 390px;
+      height: 780px;
+      background: #020617;
+      border: 10px solid #1e293b;
+      border-radius: 44px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    }
+
+    .phone-notch {
+      width: 130px;
+      height: 22px;
+      background: #1e293b;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-left-radius: 14px;
+      border-bottom-right-radius: 14px;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .camera-dot {
+      width: 8px;
+      height: 8px;
+      background: #020617;
+      border-radius: 50%;
+    }
+
+    .status-bar {
+      height: 38px;
+      padding: 6px 20px 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      z-index: 900;
+    }
+
+    /* MICROINTERACTION: Pulsing Live Status Dots */
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-green);
+      box-shadow: 0 0 0 rgba(52, 211, 153, 0.7);
+      animation: pulse-ring 1.8s infinite;
+      margin-right: 6px;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(52, 211, 153, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+      }
+    }
+
+    /* MICROINTERACTION: Ripple Effect Container */
+    .ripple-target {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      transform: scale(0);
+      animation: ripple 0.5s linear;
+      pointer-events: none;
+    }
+
+    @keyframes ripple {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    /* Screen Reader Active Banner */
+    .tts-banner {
+      background: #fbbf24;
+      color: #020617;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 850;
+    }
+
+    .tts-banner.active {
+      display: flex;
+    }
+
+    .screen-content {
+      flex: 1;
+      position: relative;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 75px;
+    }
+
+    .screen-content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .screen-content::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 4px;
+    }
+
+    .screen {
+      display: none;
+      padding: 16px 18px;
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .brand-logo {
+      text-align: center;
+      margin: 20px 0 10px 0;
+    }
+
+    .brand-logo i {
+      font-size: 3rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .brand-logo:hover i {
+      transform: translateY(-4px) rotate(-10deg);
+    }
+
+    .brand-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .brand-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .required-star {
+      color: #ef4444;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      height: var(--touch-min);
+      padding: 12px 14px;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea {
+      height: auto;
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+
+    .btn-primary {
+      width: 100%;
+      min-height: var(--touch-min);
+      background: var(--primary);
+      color: #020617;
+      border: none;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      transition: background 0.2s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      color: #ffffff;
+    }
+
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-border);
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      display: block;
+      width: 100%;
+      min-height: var(--touch-min);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* Bottom Navigation Bar with Spring Animations */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: #111827;
+      border-top: 2px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 800;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--touch-min);
+      min-height: var(--touch-min);
+      gap: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .nav-btn i {
+      font-size: 1.3rem;
+      transition: transform 0.2s ease;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+    }
+
+    .nav-btn.active i {
+      transform: translateY(-2px) scale(1.15);
+    }
+
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .back-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: transform 0.15s ease, background 0.2s;
+    }
+
+    .back-btn:active {
+      transform: scale(0.9);
+    }
+
+    .a11y-quick-btn {
+      background: #fbbf24;
+      color: #020617;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .a11y-quick-btn:hover {
+      transform: rotate(15deg) scale(1.05);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: transform 0.18s ease, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .card-interactive {
+      cursor: pointer;
+    }
+
+    .card-interactive:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .card-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .card-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: rgba(56, 189, 248, 0.2);
+      color: #7dd3fc;
+    }
+
+    .badge-a11y-feature {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-green);
+      margin-top: 4px;
+      margin-right: 4px;
+    }
+
+    /* Filter Chips Bar */
+    .filter-scroll-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+
+    .filter-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip-filter {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .chip-filter.active {
+      background: var(--primary);
+      color: #020617;
+      border-color: var(--primary);
+    }
+
+    /* MICROINTERACTION: Heart Favorite Pop Animation */
+    .fav-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 6px;
+      min-width: 36px;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s;
+    }
+
+    .fav-btn.active {
+      color: #ef4444;
+      animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4) rotate(-10deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    /* MICROINTERACTION: Checkbox Task Microinteraction */
+    .check-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--card-border);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      transition: all 0.2s ease;
+    }
+
+    .check-btn.checked {
+      background: var(--accent-green);
+      border-color: var(--accent-green);
+      color: #020617;
+      animation: checkBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .agenda-action-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--primary); background: transparent; color: var(--primary);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .agenda-action-btn.danger { border-color: #ef4444; color: #ef4444; }
+
+    /* MICROINTERACTION: duplo toque para favoritar */
+    .destination-item { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+    .heart-burst {
+      position: fixed; z-index: 9999; pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.3); opacity: 0;
+      color: #ef4444; font-size: 4.5rem; line-height: 1;
+      filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.6));
+      animation: heartBurst 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .heart-mini {
+      position: fixed; z-index: 9999; pointer-events: none; color: #fb7185; font-size: 1rem;
+      transform: translate(-50%, -50%); opacity: 0;
+      animation: heartMini 0.8s ease-out forwards;
+    }
+    @keyframes heartBurst {
+      0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+      30% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+      60% { transform: translate(-50%, -60%) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -110%) scale(1); opacity: 0; }
+    }
+    @keyframes heartMini {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); opacity: 0; }
+    }
+    .fav-btn.pop { animation: favPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes favPop { 0% { transform: scale(1); } 40% { transform: scale(1.5) rotate(-12deg); } 100% { transform: scale(1); } }
+
+    /* MICROINTERACTION: confirmação "adicionado à agenda" */
+    .agenda-added-overlay {
+      position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center;
+      background: rgba(2, 6, 23, 0.55); pointer-events: none; opacity: 0;
+      animation: addedFade 2s ease forwards;
+    }
+    .agenda-added-card {
+      background: var(--card-bg, #0f172a); border: 2px solid var(--accent-green, #34d399); color: #fff;
+      border-radius: 24px; padding: 24px 28px; text-align: center; max-width: 260px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      animation: addedPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .agenda-added-icon { position: relative; width: 84px; height: 84px; margin: 0 auto 12px; }
+    .agenda-added-icon::before {
+      content: ''; position: absolute; inset: 0; border-radius: 50%;
+      border: 3px solid var(--accent-green, #34d399); animation: addedRing 1s ease-out 0.2s both;
+    }
+    .agenda-added-icon svg { position: relative; width: 100%; height: 100%; }
+    .agenda-added-icon .circle { fill: var(--accent-green, #34d399); }
+    .agenda-added-icon .tick {
+      fill: none; stroke: #020617; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 60; stroke-dashoffset: 60; animation: addedTick 0.45s ease-out 0.35s forwards;
+    }
+    .agenda-added-title { font-size: 1.1rem; font-weight: 800; }
+    .agenda-added-name { font-size: 0.85rem; color: var(--text-muted, #94a3b8); margin-top: 4px; }
+    .agenda-added-overlay.reduced, .agenda-added-overlay.reduced * { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+    .agenda-added-overlay.reduced { animation: addedFadeStatic 1.6s linear forwards !important; }
+    .agenda-added-overlay.reduced .tick { stroke-dashoffset: 0; }
+    @keyframes addedFade { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes addedFadeStatic { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes addedPop { 0% { transform: scale(0.6) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+    @keyframes addedRing { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(1.7); opacity: 0; } }
+    @keyframes addedTick { to { stroke-dashoffset: 0; } }
+
+    @keyframes checkBounce {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .map-container {
+      width: 100%;
+      height: 300px;
+      background: #0f172a;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid var(--card-border);
+      background-image: radial-gradient(#334155 1.5px, transparent 0);
+      background-size: 20px 20px;
+    }
+
+    /* MICROINTERACTION: Map Pin Float & Hover bounce */
+    .map-pin {
+      position: absolute;
+      min-width: 48px;
+      min-height: 48px;
+      background: var(--primary);
+      border: 2px solid #ffffff;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s;
+    }
+
+    .map-pin:hover, .map-pin:focus-visible {
+      transform: rotate(-45deg) scale(1.2) translateY(-4px);
+      z-index: 100;
+    }
+
+    .map-pin i {
+      transform: rotate(45deg);
+      color: #020617;
+      font-size: 1rem;
+    }
+
+    .map-pin.closed {
+      background: #ef4444;
+      border-radius: 8px;
+      transform: rotate(0deg);
+    }
+
+    .map-pin.closed:hover, .map-pin.closed:focus-visible {
+      transform: rotate(0deg) scale(1.2) translateY(-4px);
+    }
+
+    .map-pin.closed i {
+      transform: rotate(0deg);
+      color: #ffffff;
+    }
+
+    /* Floating Emergency Action Button */
+    .fab-sos {
+      position: absolute;
+      right: 16px;
+      bottom: 82px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #ef4444;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      z-index: 820;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .fab-sos:hover {
+      transform: scale(1.1);
+    }
+
+    /* Modal drawer for Before/After Report submission */
+    .report-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.98);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      padding: 20px 16px;
+      overflow-y: auto;
+    }
+
+    .report-modal.active {
+      display: flex;
+    }
+
+    /* Modal Popup for Interactive Map Pins, Booking & Profile Modals */
+    .info-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.92);
+      z-index: 1800;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .info-modal.active {
+      display: flex;
+    }
+
+    .info-modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 18px;
+      position: relative;
+      max-height: 85%;
+      overflow-y: auto;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.8rem;
+    }
+
+    .report-table th, .report-table td {
+      border: 1px solid var(--card-border);
+      padding: 8px;
+      text-align: left;
+    }
+
+    .report-table th {
+      background: #1e293b;
+      color: var(--primary);
+    }
+
+    /* Accessibility Settings Panel */
+    .a11y-panel {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 1500;
+      display: none;
+      flex-direction: column;
+      padding: 20px 18px;
+      overflow-y: auto;
+    }
+
+    .a11y-panel.active {
+      display: flex;
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    /* Switch toggle slider */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 30px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--card-border);
+      transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-radius: 30px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Toast Notification Microinteraction */
+    #toast-notification {
+      position: fixed;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--primary);
+      color: #020617;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 3000;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <header style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+    <div class="top-controls">
+      <button class="control-btn ripple-target" onclick="showScreen('screen-login')" aria-label="Ir para tela de Login"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Login</button>
+      <button class="control-btn ripple-target" onclick="showScreen('screen-register')" aria-label="Ir para tela de Cadastro"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Cadastro</button>
+      <button class="control-btn active ripple-target" onclick="showScreen('screen-home')" aria-label="Ir para tela Inicial"><i class="fa-solid fa-house" aria-hidden="true"></i> Início</button>
+      <button class="control-btn ripple-target" onclick="showScreen('screen-agenda')" aria-label="Ir para a Agenda"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Agenda</button>
+      <button class="control-btn ripple-target" onclick="showScreen('screen-mapa')" aria-label="Ir para o Mapa"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Mapa</button>
+      <button class="control-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Abrir recursos de acessibilidade"><i class="fa-solid fa-universal-access" aria-hidden="true"></i> Acessibilidade</button>
+      <button class="control-btn ripple-target" onclick="toggleReportModal()"><span class="badge-a11y">A11Y</span> Relatório de Microinterações</button>
+    </div>
+  </header>
+
+  <!-- Smartphone Viewport Mockup -->
+  <div class="phone-wrapper" id="app-root">
+    <div class="phone-notch">
+      <div class="camera-dot"></div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" aria-label="Barra de status do celular">
+      <span id="clock-display">09:41</span>
+      <div style="display: flex; gap: 8px; align-items: center;" aria-hidden="true">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-full"></i>
+      </div>
+    </div>
+
+    <!-- Virtual Screen Reader Indicator Bar -->
+    <div class="tts-banner" id="tts-banner" aria-live="polite">
+      <span><i class="fa-solid fa-volume-high"></i> Voz Guiada / Leitor Ativo</span>
+      <button onclick="toggleSpeech(false)" style="background: none; border: none; font-weight: bold; cursor: pointer; color: #020617;">DESATIVAR</button>
+    </div>
+
+    <!-- Floating Emergency / Assistive SOS Button -->
+    <button class="fab-sos ripple-target" onclick="openEmergencyModal()" aria-label="Botão de Ajuda Rápida e Emergência">
+      <i class="fa-solid fa-hands-holding-child" aria-hidden="true"></i>
+    </button>
+
+    <!-- Main Screens Container -->
+    <main class="screen-content" id="main-content">
+
+      <!-- SCREEN 1: LOGIN -->
+      <section id="screen-login" class="screen" aria-label="Tela de Login">
+        <div class="brand-logo">
+          <i class="fa-solid fa-plane-departure" aria-hidden="true"></i>
+          <h1 class="brand-title">GoTrip</h1>
+        </div>
+        <p class="brand-subtitle">Planeje, explore e viva novas histórias.</p>
+
+        <form onsubmit="event.preventDefault(); showScreen('screen-home');">
+          <div class="form-group">
+            <label for="login-email">E-mail <span class="required-star" aria-hidden="true">*</span></label>
+            <input type="email" id="login-email" placeholder="exemplo@gotrip.com" required aria-required="true" />
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Senha <span class="required-star" aria-hidden="true">*</span></label>
+            <input type="password" id="login-password" placeholder="••••••••" required aria-required="true" />
+          </div>
+
+          <button type="submit" class="btn-primary ripple-target" aria-label="Entrar no aplicativo GoTrip">
+            <span>ENTRAR</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </button>
+        </form>
+
+        <button class="btn-link" onclick="showScreen('screen-register')" aria-label="Não tem uma conta? Clique para criar uma">
+          Não tem uma conta? Crie aqui
+        </button>
+      </section>
+
+      <!-- SCREEN 2: REGISTRO -->
+      <section id="screen-register" class="screen" aria-label="Tela de Cadastro de Usuário">
+        <div class="screen-header">
+          <button class="back-btn ripple-target" onclick="showScreen('screen-login')" aria-label="Voltar para o login">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <h2>Crie sua conta</h2>
+          <button class="a11y-quick-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Opções de acessibilidade">
+            <i class="fa-solid fa-universal-access" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <form onsubmit="event.preventDefault(); showScreen('screen-home');">
+          <div class="form-group">
+            <label for="reg-name">Nome completo <span class="required-star" aria-hidden="true">*</span></label>
+            <input type="text" id="reg-name" placeholder="Ex: Isabella Villa Torres" required aria-required="true" />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">E-mail <span class="required-star" aria-hidden="true">*</span></label>
+            <input type="email" id="reg-email" placeholder="isa@gotrip.com" required aria-required="true" />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-cpf">CPF <span class="required-star" aria-hidden="true">*</span></label>
+            <input type="text" id="reg-cpf" placeholder="000.000.000-00" required aria-required="true" />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-phone">Telefone de contato <span class="required-star" aria-hidden="true">*</span></label>
+            <input type="tel" id="reg-phone" placeholder="(11) 99999-9999" required aria-required="true" />
+          </div>
+
+          <button type="submit" class="btn-primary ripple-target" aria-label="Finalizar criação de conta">
+            CRIAR CONTA
+          </button>
+        </form>
+      </section>
+
+      <!-- SCREEN 3: HOME -->
+      <section id="screen-home" class="screen active" aria-label="Página Inicial GoTrip">
+        <div class="screen-header">
+          <div>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Boas-vindas</span>
+            <h2 style="font-size: 1.4rem;">Olá, Isa! 👋</h2>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="a11y-quick-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Central de Acessibilidade">
+              <i class="fa-solid fa-universal-access" aria-hidden="true"></i>
+            </button>
+            <button class="back-btn ripple-target" onclick="openNotificationsModal()" aria-label="Notificações">
+              <i class="fa-regular fa-bell" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="search-input">Para onde você quer viajar?</label>
+          <div style="position: relative;">
+            <input type="search" id="search-input" oninput="filterDestinations()" placeholder="Buscar destino, cidade..." style="padding-left: 42px;" aria-label="Buscar destinos acessíveis" />
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 16px; color: var(--text-muted);" aria-hidden="true"></i>
+          </div>
+        </div>
+
+        <!-- Category & Accessibility Filter Chips -->
+        <div class="filter-scroll-container" role="region" aria-label="Filtros de Acessibilidade e Categorias">
+          <button class="chip-filter active ripple-target" onclick="setCategoryFilter('all', this)" aria-label="Mostrar Todos os destinos">Todos</button>
+          <button class="chip-filter ripple-target" onclick="setCategoryFilter('wheelchair', this)" aria-label="Filtrar por Acessível para Cadeira de Rodas"><i class="fa-solid fa-wheelchair"></i> Cadeira de Rodas</button>
+          <button class="chip-filter ripple-target" onclick="setCategoryFilter('audio', this)" aria-label="Filtrar por Guia de Áudio"><i class="fa-solid fa-headphone-accessibility"></i> Guia de Áudio</button>
+          <button class="chip-filter ripple-target" onclick="setCategoryFilter('braille', this)" aria-label="Filtrar por Sinalização tátil"><i class="fa-solid fa-braille"></i> Braille / Tátil</button>
+        </div>
+
+        <!-- Quick Nav Shortcuts with Microinteractions -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;" role="region" aria-label="Atalhos rápidos">
+          <button class="card card-interactive ripple-target" style="text-align: center; padding: 12px; min-height: 70px;" onclick="showScreen('screen-mapa')" aria-label="Navegar para o Mapa Interativo">
+            <i class="fa-solid fa-map" style="font-size: 1.4rem; color: var(--primary); margin-bottom: 6px;" aria-hidden="true"></i>
+            <span style="font-size: 0.85rem; font-weight: 800; display: block; color: #ffffff;">Mapa</span>
+          </button>
+          <button class="card card-interactive ripple-target" style="text-align: center; padding: 12px; min-height: 70px;" onclick="showScreen('screen-agenda')" aria-label="Navegar para Minha Agenda">
+            <i class="fa-solid fa-calendar-check" style="font-size: 1.4rem; color: var(--accent-green); margin-bottom: 6px;" aria-hidden="true"></i>
+            <span style="font-size: 0.85rem; font-weight: 800; display: block; color: #ffffff;">Agenda</span>
+          </button>
+          <button class="card card-interactive ripple-target" style="text-align: center; padding: 12px; min-height: 70px;" onclick="showScreen('screen-profile')" aria-label="Navegar para Meu Perfil">
+            <i class="fa-solid fa-user-gear" style="font-size: 1.4rem; color: var(--accent-orange); margin-bottom: 6px;" aria-hidden="true"></i>
+            <span style="font-size: 0.85rem; font-weight: 800; display: block; color: #ffffff;">Perfil</span>
+          </button>
+        </div>
+
+        <div id="search-results" style="display: none; margin-bottom: 16px;" aria-live="polite"></div>
+
+        <div id="hot-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-size: 1.1rem;">Destinos em alta pelo mundo 🌍</h3>
+          <span style="font-size: 0.75rem; color: var(--accent-green); font-weight: 700; display: flex; align-items: center;">
+            <span class="pulse-dot"></span> Ao Vivo
+          </span>
+        </div>
+
+        <div id="destinations-container">
+          <!-- Destination Item 1: Roma -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" style="padding-right: 48px;" onclick="showDestinationDetail('roma')" tabIndex="0" role="button" aria-label="Ver detalhes de Roma, Itália. Coliseu, Fórum Romano e Gastronomia.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=300&q=80" alt="Vista do Coliseu em Roma sob céu azul" />
+              <div style="flex: 1;">
+                <span class="badge"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Itália</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Roma, Itália</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Coliseu, Fórum Romano e rica gastronomia secular.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Rampa</span>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Audioguia</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Roma, Itália')" aria-label="Salvar Roma nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 2: Paris -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair braille" style="padding-right: 48px;" onclick="showDestinationDetail('paris')" tabIndex="0" role="button" aria-label="Ver detalhes de Paris, França. Arte, arquitetura e museus.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=300&q=80" alt="Torre Eiffel em Paris durante o fim de tarde" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> França</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Paris, França</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Museu do Louvre, Torre Eiffel e passeios pelo Sena.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-elevator"></i> Elevador</span>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-braille"></i> Tátil</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Paris, França')" aria-label="Salvar Paris nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 3: Tóquio -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio braille" style="padding-right: 48px;" onclick="showDestinationDetail('tokyo')" tabIndex="0" role="button" aria-label="Ver detalhes de Tóquio, Japão. Mobilidade urbana e pontos culturais.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80" alt="Vista noturna do horizonte urbano de Tóquio" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Japão</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Tóquio, Japão</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Shibuya, Shinjuku e mobilidade urbana acessível.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-universal-access"></i> Total A11y</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Tóquio, Japão')" aria-label="Salvar Tóquio nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 4: Nova York -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" style="padding-right: 48px;" onclick="showDestinationDetail('nyc')" tabIndex="0" role="button" aria-label="Ver detalhes de Nova York, EUA. Times Square, Central Park e Broadway.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=300&q=80" alt="Luzes da Times Square em Nova York" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(192, 132, 252, 0.2); color: #e9d5ff;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> EUA</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Nova York, EUA</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Times Square, Central Park e espetáculos da Broadway.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Rampas</span>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Audioguia</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Nova York, EUA')" aria-label="Salvar Nova York nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 5: Londres -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair braille" style="padding-right: 48px;" onclick="showDestinationDetail('londres')" tabIndex="0" role="button" aria-label="Ver detalhes de Londres, Reino Unido. Big Ben, London Eye e British Museum.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=300&q=80" alt="Big Ben e ônibus vermelho em Londres" />
+              <div style="flex: 1;">
+                <span class="badge"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Reino Unido</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Londres, Reino Unido</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Big Ben, London Eye e museus com rotas adaptadas.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-bus"></i> Ônibus A11y</span>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-braille"></i> Tátil</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Londres, Reino Unido')" aria-label="Salvar Londres nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 6: Rio de Janeiro -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" style="padding-right: 48px;" onclick="showDestinationDetail('rio')" tabIndex="0" role="button" aria-label="Ver detalhes do Rio de Janeiro, Brasil. Cristo Redentor e Pão de Açúcar.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=300&q=80" alt="Estátua do Cristo Redentor no Rio de Janeiro" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Brasil</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Rio de Janeiro, Brasil</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Cristo Redentor, Pão de Açúcar e praias acessíveis.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-elevator"></i> Elevadores</span>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-water"></i> Praia Acessível</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Rio de Janeiro, Brasil')" aria-label="Salvar Rio de Janeiro nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 7: Sidney -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" style="padding-right: 48px;" onclick="showDestinationDetail('sidney')" tabIndex="0" role="button" aria-label="Ver detalhes de Sidney, Austrália. Opera House e baía marítima.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=300&q=80" alt="Sydney Opera House vista do porto" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Austrália</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Sidney, Austrália</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Opera House, Harbor Bridge e baía com navegação adaptada.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Audiodescrição</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Sidney, Austrália')" aria-label="Salvar Sidney nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 8: Dubai -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio braille" style="padding-right: 48px;" onclick="showDestinationDetail('dubai')" tabIndex="0" role="button" aria-label="Ver detalhes de Dubai, Emirados Árabes. Burj Khalifa e infraestrutura moderna.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=300&q=80" alt="Arranha-céus de Dubai iluminados ao entardecer" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Emirados Árabes</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Dubai, EAU</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Burj Khalifa, metrô autônomo e infraestrutura 100% inclusiva.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-universal-access"></i> Acessibilidade Premium</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Dubai, Emirados Árabes')" aria-label="Salvar Dubai nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 9: Cairo -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio braille" style="padding-right: 48px;" onclick="showDestinationDetail('cairo')" tabIndex="0" role="button" aria-label="Ver detalhes do Cairo, Egito. Pirâmides de Gizé e Museu Egípcio.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=300&q=80" alt="Pirâmides de Gizé no Cairo" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Egito</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Cairo, Egito</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Pirâmides de Gizé, Grande Museu e passeios guiados por voz.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Audioguia Histórico</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Cairo, Egito')" aria-label="Salvar Cairo nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 10: Amsterdã -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio braille" style="padding-right: 48px;" onclick="showDestinationDetail('amsterda')" tabIndex="0" role="button" aria-label="Ver detalhes de Amsterdã, Holanda. Canais, museus e barcos adaptados.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=300&q=80" alt="Canais de Amsterdã com pontes de tijolo" />
+              <div style="flex: 1;">
+                <span class="badge"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Holanda</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Amsterdã, Holanda</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Canais icônicos, Museu Van Gogh e passeios fluviais nivelados.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-ship"></i> Barco Acessível</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Amsterdã, Holanda')" aria-label="Salvar Amsterdã nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 11: Cidade do Cabo -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" style="padding-right: 48px;" onclick="showDestinationDetail('capetown')" tabIndex="0" role="button" aria-label="Ver detalhes da Cidade do Cabo, África do Sul. Table Mountain e orla marítima.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=300&q=80" alt="Montanha da Mesa na Cidade do Cabo" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(192, 132, 252, 0.2); color: #e9d5ff;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> África do Sul</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Cidade do Cabo</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Table Mountain com teleférico acessível e orla paradisíaca.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Bondinho A11y</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Cidade do Cabo, África do Sul')" aria-label="Salvar Cidade do Cabo nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 12: Barcelona -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair" style="padding-right: 48px;" onclick="showDestinationDetail('barcelona')" tabIndex="0" role="button" aria-label="Ver detalhes de Barcelona, Espanha. Praias e arquitetura.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=300&q=80" alt="Basílica da Sagrada Família em Barcelona" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Espanha</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Barcelona, Espanha</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Sagrada Família, orla marítima e arquitetura de Gaudí.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Rampas Suaves</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Barcelona, Espanha')" aria-label="Salvar Barcelona nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item 13: Curitiba -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" style="padding-right: 48px;" onclick="showDestinationDetail('curitiba')" tabIndex="0" role="button" aria-label="Ver detalhes de Curitiba, Brasil. Parques urbanos e transporte.">
+            <div class="card-row">
+              <img class="card-img" src="https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=300&q=80" alt="Estufa de vidro do Jardim Botânico de Curitiba" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Brasil</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Curitiba, Brasil</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Jardim Botânico, parques naturais e ampla rede urbana.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Áudio</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Curitiba, Brasil')" aria-label="Salvar Curitiba nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Lisboa, Portugal -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" data-wiki="Lisboa" data-key="lisboa" style="padding-right: 48px;" onclick="showDestinationDetail('lisboa')" tabIndex="0" role="button" aria-label="Ver detalhes de Lisboa, Portugal. Bondes históricos, Torre de Belém e miradouros com vista para o Tejo.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Lisboa, Portugal" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Portugal</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Lisboa, Portugal</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Bondes históricos, Torre de Belém e miradouros com vista para o Tejo.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Áudio</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Lisboa, Portugal')" aria-label="Salvar Lisboa nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Veneza, Itália -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair" data-wiki="Veneza" data-key="veneza" style="padding-right: 48px;" onclick="showDestinationDetail('veneza')" tabIndex="0" role="button" aria-label="Ver detalhes de Veneza, Itália. Canais, Praça de São Marcos e passeios de vaporetto.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Veneza, Itália" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Itália</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Veneza, Itália</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Canais, Praça de São Marcos e passeios de vaporetto.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Vaporetto Acessível</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Veneza, Itália')" aria-label="Salvar Veneza nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Santorini, Grécia -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio" data-wiki="Santorini" data-key="santorini" style="padding-right: 48px;" onclick="showDestinationDetail('santorini')" tabIndex="0" role="button" aria-label="Ver detalhes de Santorini, Grécia. Vilas brancas, pôr do sol em Oia e vista para a caldeira.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Santorini, Grécia" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(167, 139, 250, 0.2); color: #c4b5fd;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Grécia</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Santorini, Grécia</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Vilas brancas, pôr do sol em Oia e vista para a caldeira.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Guia de Áudio</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Santorini, Grécia')" aria-label="Salvar Santorini nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Machu Picchu, Peru -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio braille" data-wiki="Machu Picchu" data-key="machupicchu" style="padding-right: 48px;" onclick="showDestinationDetail('machupicchu')" tabIndex="0" role="button" aria-label="Ver detalhes de Machu Picchu, Peru. Cidadela inca nas montanhas dos Andes.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Machu Picchu, Peru" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Peru</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Machu Picchu, Peru</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Cidadela inca nas montanhas dos Andes.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-braille"></i> Guia Tátil</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Machu Picchu, Peru')" aria-label="Salvar Machu Picchu nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Istambul, Turquia -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" data-wiki="Istambul" data-key="istambul" style="padding-right: 48px;" onclick="showDestinationDetail('istambul')" tabIndex="0" role="button" aria-label="Ver detalhes de Istambul, Turquia. Santa Sofia, Mesquita Azul e o Bósforo.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Istambul, Turquia" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Turquia</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Istambul, Turquia</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Santa Sofia, Mesquita Azul e o Bósforo.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Acessível</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Istambul, Turquia')" aria-label="Salvar Istambul nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Praga, República Tcheca -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio" data-wiki="Praga" data-key="praga" style="padding-right: 48px;" onclick="showDestinationDetail('praga')" tabIndex="0" role="button" aria-label="Ver detalhes de Praga, República Tcheca. Castelo de Praga, Ponte Carlos e cidade velha.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Praga, República Tcheca" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> República Tcheca</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Praga, República Tcheca</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Castelo de Praga, Ponte Carlos e cidade velha.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Áudio</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Praga, República Tcheca')" aria-label="Salvar Praga nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Buenos Aires, Argentina -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair" data-wiki="Buenos Aires" data-key="buenosaires" style="padding-right: 48px;" onclick="showDestinationDetail('buenosaires')" tabIndex="0" role="button" aria-label="Ver detalhes de Buenos Aires, Argentina. Tango, La Boca, Recoleta e grandes avenidas.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Buenos Aires, Argentina" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(167, 139, 250, 0.2); color: #c4b5fd;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Argentina</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Buenos Aires, Argentina</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Tango, La Boca, Recoleta e grandes avenidas.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Calçadas Planas</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Buenos Aires, Argentina')" aria-label="Salvar Buenos Aires nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Bali, Indonésia -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio" data-wiki="Bali" data-key="bali" style="padding-right: 48px;" onclick="showDestinationDetail('bali')" tabIndex="0" role="button" aria-label="Ver detalhes de Bali, Indonésia. Templos, arrozais em terraços e praias tropicais.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Bali, Indonésia" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Indonésia</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Bali, Indonésia</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Templos, arrozais em terraços e praias tropicais.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Áudio</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Bali, Indonésia')" aria-label="Salvar Bali nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Marrakech, Marrocos -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio braille" data-wiki="Marrakech" data-key="marrakech" style="padding-right: 48px;" onclick="showDestinationDetail('marrakech')" tabIndex="0" role="button" aria-label="Ver detalhes de Marrakech, Marrocos. Medina, jardins Majorelle e mercados coloridos.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Marrakech, Marrocos" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Marrocos</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Marrakech, Marrocos</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Medina, jardins Majorelle e mercados coloridos.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-braille"></i> Tátil</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Marrakech, Marrocos')" aria-label="Salvar Marrakech nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Berlim, Alemanha -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" data-wiki="Berlim" data-key="berlim" style="padding-right: 48px;" onclick="showDestinationDetail('berlim')" tabIndex="0" role="button" aria-label="Ver detalhes de Berlim, Alemanha. Portão de Brandemburgo, muro e museus.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Berlim, Alemanha" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Alemanha</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Berlim, Alemanha</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Portão de Brandemburgo, muro e museus.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Transporte Acessível</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Berlim, Alemanha')" aria-label="Salvar Berlim nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Vancouver, Canadá -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair" data-wiki="Vancouver" data-key="vancouver" style="padding-right: 48px;" onclick="showDestinationDetail('vancouver')" tabIndex="0" role="button" aria-label="Ver detalhes de Vancouver, Canadá. Stanley Park, montanhas e orla do Pacífico.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Vancouver, Canadá" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(167, 139, 250, 0.2); color: #c4b5fd;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Canadá</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Vancouver, Canadá</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Stanley Park, montanhas e orla do Pacífico.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Rampas Suaves</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Vancouver, Canadá')" aria-label="Salvar Vancouver nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Foz do Iguaçu, Brasil -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair audio" data-wiki="Foz do Iguaçu" data-key="fozdoiguacu" style="padding-right: 48px;" onclick="showDestinationDetail('fozdoiguacu')" tabIndex="0" role="button" aria-label="Ver detalhes de Foz do Iguaçu, Brasil. Cataratas do Iguaçu com passarelas e mirantes.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Foz do Iguaçu, Brasil" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(251, 146, 60, 0.2); color: #fdba74;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Brasil</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Foz do Iguaçu, Brasil</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Cataratas do Iguaçu com passarelas e mirantes.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Passarelas Acessíveis</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Foz do Iguaçu, Brasil')" aria-label="Salvar Foz do Iguaçu nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Fernando de Noronha, Brasil -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio" data-wiki="Fernando de Noronha" data-key="noronha" style="padding-right: 48px;" onclick="showDestinationDetail('noronha')" tabIndex="0" role="button" aria-label="Ver detalhes de Fernando de Noronha, Brasil. Praias paradisíacas e vida marinha preservada.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Fernando de Noronha, Brasil" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Brasil</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Fernando de Noronha, Brasil</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Praias paradisíacas e vida marinha preservada.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-headphone-accessibility"></i> Áudio</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Fernando de Noronha, Brasil')" aria-label="Salvar Fernando de Noronha nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Gramado, Brasil -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="wheelchair" data-wiki="Gramado" data-key="gramado" style="padding-right: 48px;" onclick="showDestinationDetail('gramado')" tabIndex="0" role="button" aria-label="Ver detalhes de Gramado, Brasil. Arquitetura de inspiração alpina, chocolate e festivais.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Gramado, Brasil" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #6ee7b7;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Brasil</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Gramado, Brasil</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Arquitetura de inspiração alpina, chocolate e festivais.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-wheelchair"></i> Centro Plano</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Gramado, Brasil')" aria-label="Salvar Gramado nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+
+          <!-- Destination Item extra: Salvador, Brasil -->
+          <article class="card card-interactive destination-item ripple-target" data-tags="audio braille" data-wiki="Salvador" data-key="salvador" style="padding-right: 48px;" onclick="showDestinationDetail('salvador')" tabIndex="0" role="button" aria-label="Ver detalhes de Salvador, Brasil. Pelourinho, Elevador Lacerda e praias.">
+            <div class="card-row">
+              <img class="card-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>" alt="Salvador, Brasil" />
+              <div style="flex: 1;">
+                <span class="badge" style="background: rgba(167, 139, 250, 0.2); color: #c4b5fd;"><i class="fa-solid fa-location-dot" aria-hidden="true" style="margin-right: 4px;"></i> Brasil</span>
+                <h4 class="dest-title" style="margin: 4px 0 2px 0;">Salvador, Brasil</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Pelourinho, Elevador Lacerda e praias.</p>
+                <div>
+                  <span class="badge-a11y-feature"><i class="fa-solid fa-braille"></i> Tátil</span>
+                </div>
+              </div>
+            </div>
+            <button class="fav-btn" onclick="toggleFavorite(event, this, 'Salvador, Brasil')" aria-label="Salvar Salvador nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: AGENDA -->
+      <section id="screen-agenda" class="screen" aria-label="Minha Agenda de Viagem">
+        <div class="screen-header">
+          <button class="back-btn ripple-target" onclick="showScreen('screen-home')" aria-label="Voltar para a página inicial">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <h2>Minha Agenda</h2>
+          <button class="a11y-quick-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Central de Acessibilidade">
+            <i class="fa-solid fa-universal-access" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px;">
+          <button class="control-btn day-btn ripple-target" style="min-height: 44px; min-width: 80px;" onclick="selectAgendaDay(this, 'seg14', 'Seg 14')" aria-label="Segunda-feira dia 14">Seg 14</button>
+          <button class="control-btn day-btn ripple-target" style="min-height: 44px; min-width: 80px;" onclick="selectAgendaDay(this, 'ter15', 'Ter 15')" aria-label="Terça-feira dia 15">Ter 15</button>
+          <button class="control-btn day-btn active ripple-target" style="min-height: 44px; min-width: 80px;" onclick="selectAgendaDay(this, 'qua16', 'Qua 16')" aria-current="date" aria-label="Quarta-feira dia 16 selecionado">Qua 16</button>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <button id="agenda-edit-btn" class="control-btn ripple-target" style="padding: 4px 12px; font-size: 0.75rem; min-height: 36px;" onclick="toggleAgendaEdit()" aria-pressed="false" aria-label="Editar e organizar minha agenda">
+            <i class="fa-solid fa-pen" aria-hidden="true"></i> <span>Editar / Organizar</span>
+          </button>
+          <button class="control-btn ripple-target" style="background: var(--accent-green); color: #020617; padding: 4px 12px; font-size: 0.75rem; min-height: 36px;" onclick="openNewEventModal()">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i> Add Atividade
+          </button>
+        </div>
+
+        <div id="agenda-items-list">
+          <h3 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase;">MANHÃ</h3>
+          
+          <article class="card card-interactive ripple-target" style="display: flex; align-items: center; justify-content: space-between;" onclick="showDestinationDetail('trevi')">
+            <div class="card-row" style="flex: 1;">
+              <img class="card-img" src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?auto=format&fit=crop&w=200&q=80" alt="Fonte Fontana di Trevi em Roma" />
+              <div>
+                <h4>Fontana di Trevi</h4>
+                <span style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 700;"><i class="fa-regular fa-clock" aria-hidden="true"></i> 10:00 - 11:00</span>
+              </div>
+            </div>
+            <!-- Checkmark microinteraction -->
+            <button class="check-btn" onclick="toggleTaskCheck(event, this, 'Fontana di Trevi')" aria-label="Marcar Fontana di Trevi como visitado">
+              <i class="fa-solid fa-check"></i>
+            </button>
+          </article>
+
+          <h3 style="color: var(--text-muted); font-size: 0.85rem; margin: 16px 0 8px 0; text-transform: uppercase;">TARDE</h3>
+          
+          <article class="card card-interactive ripple-target" style="display: flex; align-items: center; justify-content: space-between;" onclick="showDestinationDetail('coliseu')">
+            <div class="card-row" style="flex: 1;">
+              <img class="card-img" src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=200&q=80" alt="Anfiteatro do Coliseu Romano" />
+              <div>
+                <h4>Coliseu Romano</h4>
+                <span style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 700;"><i class="fa-regular fa-clock" aria-hidden="true"></i> 16:00 - 18:00</span>
+              </div>
+            </div>
+            <!-- Checkmark microinteraction -->
+            <button class="check-btn" onclick="toggleTaskCheck(event, this, 'Coliseu Romano')" aria-label="Marcar Coliseu como visitado">
+              <i class="fa-solid fa-check"></i>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: MAPA -->
+      <section id="screen-mapa" class="screen" aria-label="Mapa Interativo de Locais">
+        <div class="screen-header">
+          <button class="back-btn ripple-target" onclick="showScreen('screen-home')" aria-label="Voltar para o início">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <h2>Mapa de Locais</h2>
+          <button class="a11y-quick-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Acessibilidade">
+            <i class="fa-solid fa-universal-access" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="map-container">
+          <!-- Accessible Map Pins with Microinteractions -->
+          <button class="map-pin ripple-target" style="top: 30%; left: 45%;" onclick="openMapPinModal('Fórum Romano', 'Aberto', 'Sítio arqueológico histórico situado no centro antigo de Roma. Possui acesso adaptado por rampa e guias auditivos.', 'roma')" aria-label="Fórum Romano - Ponto Turístico Aberto (Pin Azul Redondo)">
+            <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+          </button>
+
+          <button class="map-pin closed ripple-target" style="top: 58%; left: 22%;" onclick="openMapPinModal('Trattoria da Nonna', 'Fechado Temporariamente', 'Restaurante em manutenção de infraestrutura.', null)" aria-label="Restaurante Trattoria - Fechado para manutenção (Pin Vermelho Quadrado)">
+            <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+          </button>
+
+          <button class="map-pin ripple-target" style="top: 68%; left: 68%;" onclick="openMapPinModal('Hotel Roma Central', 'Aberto', 'Hospedagem no centro histórico próximo às principais atrações com quartos adaptados PCD.', null)" aria-label="Hotel Central - Aberto">
+            <i class="fa-solid fa-bed" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="card" style="margin-top: 14px;">
+          <p style="font-size: 0.88rem; color: var(--text-main); line-height: 1.4;">
+            <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 6px;" aria-hidden="true"></i>
+            <strong>Legenda:</strong> Marcadores azuis representam locais abertos e acessíveis; marcadores vermelhos representam locais indisponíveis no momento.
+          </p>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: DETALHES -->
+      <section id="screen-detail" class="screen" aria-label="Detalhes do Destino">
+        <div class="screen-header">
+          <button class="back-btn ripple-target" onclick="showScreen('screen-home')" aria-label="Voltar para a lista">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <h2 id="detail-title">Fórum Romano</h2>
+          <button class="a11y-quick-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Central de Acessibilidade">
+            <i class="fa-solid fa-universal-access" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <img id="detail-img" src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80" alt="Fotografia do local turístico selecionado" style="width: 100%; height: 180px; object-fit: cover; border-radius: 14px; margin-bottom: 14px; border: 1px solid var(--card-border);" />
+
+        <p id="detail-desc" style="font-size: 0.95rem; color: var(--text-main); line-height: 1.5; margin-bottom: 16px;">
+          O Fórum Romano é um dos sítios arqueológicos mais emblemáticos do mundo, localizado no coração histórico de Roma.
+        </p>
+
+        <div class="card">
+          <p style="font-size: 0.9rem; margin-bottom: 8px; color: var(--text-main);">
+            <strong style="color: var(--primary);"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Endereço:</strong> <span id="detail-address">Via della Salara Vecchia, 5/6, Roma.</span>
+          </p>
+          <p style="font-size: 0.9rem; margin-bottom: 8px; color: var(--text-main);">
+            <strong style="color: var(--accent-green);"><i class="fa-solid fa-ticket" aria-hidden="true"></i> Ingresso:</strong> Entrada com agendamento prévio
+          </p>
+          <p style="font-size: 0.9rem; color: var(--text-main);">
+            <strong style="color: var(--accent-orange);"><i class="fa-solid fa-clock" aria-hidden="true"></i> Horários:</strong> Todos os dias das 8h30 às 19h15.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="btn-primary ripple-target" style="flex: 1;" onclick="addCurrentToSchedule()" aria-label="Adicionar este local à minha agenda de viagem">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i> À Agenda
+          </button>
+          <button class="btn-primary btn-secondary ripple-target" style="flex: 1;" onclick="openBookingModal()" aria-label="Reservar ingresso acessível">
+            <i class="fa-solid fa-ticket" aria-hidden="true"></i> Reservar
+          </button>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: PERFIL & CONFIGURAÇÕES -->
+      <section id="screen-profile" class="screen" aria-label="Perfil do Usuário">
+        <div class="screen-header">
+          <button class="back-btn ripple-target" onclick="showScreen('screen-home')" aria-label="Voltar para a página inicial">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <h2>Meu Perfil</h2>
+          <button class="a11y-quick-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Central de Acessibilidade">
+            <i class="fa-solid fa-universal-access" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Foto de perfil de Isabella Villa Torres sorrindo" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 8px;" />
+          <h3 style="font-size: 1.25rem; color: var(--text-main);">Isabella Villa Torres</h3>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">isa@gotrip.com</span>
+        </div>
+
+        <div class="card" style="padding: 0; margin-bottom: 16px;">
+          <button class="ripple-target" style="width: 100%; min-height: 48px; text-align: left; background: none; border: none; border-bottom: 1px solid var(--card-border); padding: 14px; color: var(--text-main); font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleA11yPanel()">
+            <span><i class="fa-solid fa-universal-access" style="color: var(--primary); margin-right: 10px;" aria-hidden="true"></i> Configurações de Exibição</span>
+            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted);" aria-hidden="true"></i>
+          </button>
+
+          <button class="ripple-target" style="width: 100%; min-height: 48px; text-align: left; background: none; border: none; border-bottom: 1px solid var(--card-border); padding: 14px; color: var(--text-main); font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="openTripsModal()">
+            <span><i class="fa-solid fa-plane" style="color: var(--accent-green); margin-right: 10px;" aria-hidden="true"></i> Minhas Viagens</span>
+            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted);" aria-hidden="true"></i>
+          </button>
+
+          <button class="ripple-target" style="width: 100%; min-height: 48px; text-align: left; background: none; border: none; padding: 14px; color: var(--text-main); font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="openSupportModal()">
+            <span><i class="fa-solid fa-headset" style="color: var(--accent-orange); margin-right: 10px;" aria-hidden="true"></i> Atendimento e Suporte</span>
+            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted);" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <button class="btn-primary ripple-target" style="background: #ef4444; color: #ffffff;" onclick="showScreen('screen-login')" aria-label="Sair da conta de usuário">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sair da Conta
+        </button>
+      </section>
+
+    </main>
+
+    <!-- IN-APP ACCESSIBILITY PANEL DRAWER -->
+    <div class="a11y-panel" id="a11y-panel" aria-label="Painel de Configurações de Acessibilidade">
+      <div class="screen-header">
+        <h2>Acessibilidade</h2>
+        <button class="back-btn ripple-target" onclick="toggleA11yPanel()" aria-label="Fechar painel de acessibilidade">✕</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Personalize suas preferências de exibição e leitura.
+      </p>
+
+      <!-- Font Size Scaling -->
+      <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+        <span style="font-weight: bold; font-size: 0.95rem;">Tamanho do Texto (Fonte)</span>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button class="control-btn font-size-btn ripple-target" style="flex: 1;" onclick="setFontSize('0.85rem', this)" aria-label="Tamanho de texto pequeno">A-</button>
+          <button class="control-btn font-size-btn active ripple-target" style="flex: 1;" onclick="setFontSize('1rem', this)" aria-label="Tamanho de texto normal">Normal</button>
+          <button class="control-btn font-size-btn ripple-target" style="flex: 1;" onclick="setFontSize('1.15rem', this)" aria-label="Tamanho de texto grande">A+</button>
+          <button class="control-btn font-size-btn ripple-target" style="flex: 1;" onclick="setFontSize('1.3rem', this)" aria-label="Tamanho de texto extra grande">A++</button>
+        </div>
+      </div>
+
+      <!-- Text to Speech / Voice Guide -->
+      <div class="setting-item">
+        <div>
+          <span style="font-weight: bold; font-size: 0.95rem; display: block;">Leitor de Voz / Guiada</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Lê botões e textos ao tocar na tela</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-speech-input" onchange="toggleSpeech(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- High Contrast Mode -->
+      <div class="setting-item">
+        <div>
+          <span style="font-weight: bold; font-size: 0.95rem; display: block;">Alto Contraste</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Aumenta a nitidez visual</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-contrast-input" onchange="toggleHighContrast(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Dyslexia Friendly Font -->
+      <div class="setting-item">
+        <div>
+          <span style="font-weight: bold; font-size: 0.95rem; display: block;">Fonte para Dislexia</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Espaçamento ampliado para leitura</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-dyslexic-input" onchange="toggleDyslexicFont(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Reduce Animations -->
+      <div class="setting-item">
+        <div>
+          <span style="font-weight: bold; font-size: 0.95rem; display: block;">Reduzir Animações</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Elimina transições na tela</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-motion-input" onchange="toggleReduceMotion(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <button class="btn-primary ripple-target" style="margin-top: 20px;" onclick="toggleA11yPanel()">CONCLUIR</button>
+    </div>
+
+    <!-- DYNAMIC POPUP MODAL FOR MAP PINS, NOTIFICATIONS, TRIPS, SUPPORT & BOOKINGS -->
+    <div class="info-modal" id="info-modal" aria-label="Modal Informativo">
+      <div class="info-modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 id="info-modal-title" style="font-size: 1.1rem; color: var(--primary);">Título</h3>
+          <button class="back-btn ripple-target" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; font-size: 0.9rem;" onclick="closeInfoModal()" aria-label="Fechar janela">✕</button>
+        </div>
+        <div id="info-modal-body" style="font-size: 0.88rem; color: var(--text-main); line-height: 1.5; margin-bottom: 16px;">
+          Conteúdo...
+        </div>
+        <div id="info-modal-actions" style="display: flex; gap: 8px;">
+          <button class="btn-primary ripple-target" onclick="closeInfoModal()">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile Format) -->
+    <nav class="bottom-nav" aria-label="Navegação inferior do aplicativo">
+      <button class="nav-btn active ripple-target" id="nav-home" onclick="showScreen('screen-home')" aria-label="Ir para a tela inicial">
+        <i class="fa-solid fa-house" aria-hidden="true"></i>
+        <span>Início</span>
+      </button>
+      <button class="nav-btn ripple-target" id="nav-agenda" onclick="showScreen('screen-agenda')" aria-label="Ir para a agenda">
+        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+        <span>Agenda</span>
+      </button>
+      <button class="nav-btn ripple-target" id="nav-mapa" onclick="showScreen('screen-mapa')" aria-label="Ir para o mapa">
+        <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+        <span>Mapa</span>
+      </button>
+      <button class="nav-btn ripple-target" id="nav-profile" onclick="showScreen('screen-profile')" aria-label="Ir para o perfil">
+        <i class="fa-solid fa-user" aria-hidden="true"></i>
+        <span>Perfil</span>
+      </button>
+    </nav>
+
+    <!-- BEFORE / AFTER ACCESSIBILITY REPORT DRAWER FOR SUBMISSION -->
+    <div class="report-modal" id="report-modal" aria-label="Relatório de Microinterações">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2 style="font-size: 1.1rem; color: var(--primary);">Microinterações Implementadas</h2>
+        <button class="back-btn ripple-target" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px;" onclick="toggleReportModal()" aria-label="Fechar relatório">✕</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+        Catálogo de microinterações e acessibilidade avançada adicionadas ao GoTrip:
+      </p>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Microinteração</th>
+            <th>Impacto de UX / A11Y</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Efeito Ondulação (Ripple Touch)</strong></td>
+            <td>Feedback visual tátil ao pressionar botões e cartões interativos.</td>
+          </tr>
+          <tr>
+            <td><strong>2. Animação de Favoritar (Heart Pop)</strong></td>
+            <td>Efeito elástico de explosão do coração e alteração de cor instantânea.</td>
+          </tr>
+          <tr>
+            <td><strong>3. Checkmark da Agenda (Task Complete)</strong></td>
+            <td>Animação de marcação gratificante ao concluir um item do itinerário.</td>
+          </tr>
+          <tr>
+            <td><strong>4. Resposta Háptica (Vibração)</strong></td>
+            <td>Microvibrações de confirmação do dispositivo (`navigator.vibrate`).</td>
+          </tr>
+          <tr>
+            <td><strong>5. Indicador "Ao Vivo" (Pulsing Dot)</strong></td>
+            <td>Bolinha pulsante comunicando atualizações em tempo real no app.</td>
+          </tr>
+          <tr>
+            <td><strong>6. Filtros por Recursos de Mobilidade</strong></td>
+            <td>Busca por rampas, audioguias e elevadores acessíveis.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button class="btn-primary ripple-target" style="margin-top: 16px;" onclick="toggleReportModal()">VOLTAR AO APP MOBILE</button>
+    </div>
+
+  </div>
+
+  <!-- In-app Toast Message -->
+  <div id="toast-notification" role="status" aria-live="polite">
+    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+    <span id="toast-message">Notificação</span>
+  </div>
+
+  <script>
+    let speechEnabled = false;
+    let reduceMotionEnabled = false;
+    let currentDestinationName = "Fórum Romano";
+    let activeCategoryFilter = "all";
+    let currentSelectedDay = "qua16";
+    let currentDestinationKey = 'roma';
+
+    // Destination Database with Global Destinations
+    const destinationData = {
+      roma: {
+        title: "Roma, Itália - Coliseu & Fórum",
+        img: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80",
+        desc: "O Fórum Romano e o Coliseu são marcos históricos icônicos no centro antigo de Roma, equipados com elevadores panorâmicos, rampas e audioguia tátil.",
+        address: "Piazza del Colosseo, 1, 00184 Roma, Itália."
+      },
+      paris: {
+        title: "Paris, França - Museu do Louvre & Torre Eiffel",
+        img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80",
+        desc: "A Cidade Luz se destaca por sua riqueza cultural, museus adaptados com elevadores, sinalização tátil e passeios fluviais acessíveis pelo Rio Sena.",
+        address: "Rue de Rivoli, 75001 Paris, França."
+      },
+      tokyo: {
+        title: "Tóquio, Japão - Shibuya & Shinjuku",
+        img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+        desc: "Referência global em acessibilidade urbana, contando com piso tátil contínuo em toda a cidade, elevadores universais no metrô e audioguias.",
+        address: "Shinjuku City, Tóquio, Japão."
+      },
+      nyc: {
+        title: "Nova York, EUA - Broadway & Times Square",
+        img: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=600&q=80",
+        desc: "A metrópole conta com teatros da Broadway acessíveis para cadeirantes e deficientes visuais, Central Park com rotas pavimentadas e táxis adaptados.",
+        address: "Times Square, New York, NY 10036, EUA."
+      },
+      londres: {
+        title: "Londres, Reino Unido - Big Ben & Museus",
+        img: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=600&q=80",
+        desc: "Ônibus de dois andares com rampas automáticas, museus públicos 100% gratuitos e acessíveis, e a famosa cápsula da London Eye adaptada.",
+        address: "Westminster, Londres SW1A 0AA, Reino Unido."
+      },
+      rio: {
+        title: "Rio de Janeiro, Brasil - Cristo & Pão de Açúcar",
+        img: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=600&q=80",
+        desc: "Um dos cenários naturais mais bonitos do mundo, o Cristo Redentor conta com elevadores e escadas rolantes até o topo, e o projeto 'Praia sem Barreiras'.",
+        address: "Parque Nacional da Tijuca, Rio de Janeiro - RJ, Brasil."
+      },
+      sidney: {
+        title: "Sidney, Austrália - Opera House & Baía",
+        img: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=600&q=80",
+        desc: "A emblemática Opera House oferece assentos adaptados e audiodescrição em tempo real, além de navegação pela baía com acessibilidade completa.",
+        address: "Bennelong Point, Sydney NSW 2000, Austrália."
+      },
+      dubai: {
+        title: "Dubai, Emirados Árabes - Burj Khalifa",
+        img: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=600&q=80",
+        desc: "Infraestrutura ultramoderna projetada do zero para acessibilidade universal. De shoppings até o topo do Burj Khalifa, tudo é totalmente nivelado.",
+        address: "1 Sheikh Mohammed bin Rashid Blvd, Dubai, EAU."
+      },
+      cairo: {
+        title: "Cairo, Egito - Pirâmides de Gizé & Museu",
+        img: "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=600&q=80",
+        desc: "Descubra uma das 7 maravilhas antigas do mundo com o novo Grande Museu Egípcio adaptado com rotas táteis e áudio interativo.",
+        address: "Al Giza Desert, Giza Governorate, Egito."
+      },
+      amsterda: {
+        title: "Amsterdã, Holanda - Canais & Van Gogh",
+        img: "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=600&q=80",
+        desc: "Uma cidade plana perfeita para explorar. Barcos de passeio pelos canais contam com elevadores de plataforma para cadeiras de rodas.",
+        address: "Museumplein 6, 1071 DJ Amsterdã, Holanda."
+      },
+      capetown: {
+        title: "Cidade do Cabo, África do Sul - Table Mountain",
+        img: "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=600&q=80",
+        desc: "A vista deslumbrante da Montanha da Mesa pode ser acessada por um teleférico com piso giratório plano e de fácil embarque para PCDs.",
+        address: "Tafelberg Rd, Cape Town, África do Sul."
+      },
+      barcelona: {
+        title: "Barcelona, Espanha - Sagrada Família & Orla",
+        img: "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=600&q=80",
+        desc: "Barcelona oferece uma combinação perfeita de praias com passadeiras adaptadas, parques ensolarados e as obras de Gaudí com acesso facilitado.",
+        address: "C/ de Mallorca, 401, 08013 Barcelona, Espanha."
+      },
+      curitiba: {
+        title: "Curitiba, Brasil - Jardim Botânico & Parques",
+        img: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=600&q=80",
+        desc: "Referência em sustentabilidade, com parques nivelados, transporte público adaptado em tubos e o famoso Jardim das Sensações (tátil e olfativo).",
+        address: "R. Eng. Ostoja Roguski, Curitiba - PR, Brasil."
+      },
+      lisboa: {
+        title: "Lisboa, Portugal",
+        img: "",
+        desc: "Lisboa combina bairros históricos, miradouros e o rio Tejo. Há trajetos planos na zona ribeirinha e audioguias nos principais monumentos.",
+        address: "Praça do Comércio, 1100-148 Lisboa, Portugal."
+      },
+      veneza: {
+        title: "Veneza, Itália",
+        img: "",
+        desc: "Cidade construída sobre canais, com passeios de vaporetto e rampas instaladas em várias pontes durante a temporada.",
+        address: "Piazza San Marco, 30124 Veneza, Itália."
+      },
+      santorini: {
+        title: "Santorini, Grécia",
+        img: "",
+        desc: "Ilha vulcânica famosa pelas casas brancas de cúpulas azuis e pelo pôr do sol em Oia. Roteiros guiados ajudam a explorar as vilas.",
+        address: "Oia, 847 02 Santorini, Grécia."
+      },
+      machupicchu: {
+        title: "Machu Picchu, Peru",
+        img: "",
+        desc: "Cidadela inca do século XV, uma das sete maravilhas do mundo moderno, com visitas guiadas e trilhas de diferentes níveis.",
+        address: "Santuário Histórico de Machu Picchu, Cusco, Peru."
+      },
+      istambul: {
+        title: "Istambul, Turquia",
+        img: "",
+        desc: "Cidade entre dois continentes, com monumentos bizantinos e otomanos, bazares e passeios de barco pelo Bósforo.",
+        address: "Sultanahmet, Fatih, Istambul, Turquia."
+      },
+      praga: {
+        title: "Praga, República Tcheca",
+        img: "",
+        desc: "Centro histórico preservado, com o Castelo de Praga, a Ponte Carlos e o relógio astronômico da Cidade Velha.",
+        address: "Hradčany, 119 08 Praga, República Tcheca."
+      },
+      buenosaires: {
+        title: "Buenos Aires, Argentina",
+        img: "",
+        desc: "Capital cultural da América do Sul, com bairros coloridos, cafés históricos, teatros e shows de tango.",
+        address: "Plaza de Mayo, C1002 Buenos Aires, Argentina."
+      },
+      bali: {
+        title: "Bali, Indonésia",
+        img: "",
+        desc: "Ilha de templos hindus, arrozais em terraços e praias, com opções de passeios culturais e de natureza.",
+        address: "Ubud, Gianyar, Bali, Indonésia."
+      },
+      marrakech: {
+        title: "Marrakech, Marrocos",
+        img: "",
+        desc: "Cidade imperial com medina murada, souks, palácios e jardins, famosa pela culinária e pelo artesanato.",
+        address: "Praça Jemaa el-Fna, Marrakech, Marrocos."
+      },
+      berlim: {
+        title: "Berlim, Alemanha",
+        img: "",
+        desc: "Cidade com forte história do século XX, memoriais, museus e ótima rede de transporte adaptado.",
+        address: "Pariser Platz, 10117 Berlim, Alemanha."
+      },
+      vancouver: {
+        title: "Vancouver, Canadá",
+        img: "",
+        desc: "Cidade entre o mar e as montanhas, com parques urbanos, orla com ciclovias e trilhas adaptadas.",
+        address: "Stanley Park, Vancouver, BC, Canadá."
+      },
+      fozdoiguacu: {
+        title: "Foz do Iguaçu, Brasil",
+        img: "",
+        desc: "Lar das Cataratas do Iguaçu, com passarelas e mirantes adaptados e transporte interno acessível no parque.",
+        address: "Rodovia BR-469, km 18, Foz do Iguaçu - PR, Brasil."
+      },
+      noronha: {
+        title: "Fernando de Noronha, Brasil",
+        img: "",
+        desc: "Arquipélago com praias premiadas, mergulho e vida marinha preservada, com visitação controlada.",
+        address: "Distrito Estadual de Fernando de Noronha - PE, Brasil."
+      },
+      gramado: {
+        title: "Gramado, Brasil",
+        img: "",
+        desc: "Cidade serrana com arquitetura alpina, gastronomia, festivais e centro com calçadas largas.",
+        address: "Gramado - RS, Brasil."
+      },
+      salvador: {
+        title: "Salvador, Brasil",
+        img: "",
+        desc: "Primeira capital do Brasil, com o Pelourinho, igrejas barrocas, cultura afro-brasileira e a Baía de Todos os Santos.",
+        address: "Largo do Pelourinho, Salvador - BA, Brasil."
+      },
+      vaticano: {
+        title: "Basílica de São Pedro & Vaticano",
+        img: "https://images.unsplash.com/photo-1531572753322-ad063cecc140?auto=format&fit=crop&w=600&q=80",
+        desc: "Os Museus do Vaticano e a majestosa Basílica de São Pedro possuem elevadores adaptados, piso tátil e rotas de acessibilidade.",
+        address: "Piazza San Pietro, 00120 Città del Vaticano, Itália."
+      },
+      pantheon: {
+        title: "Panteão & Piazza Navona",
+        img: "https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=600&q=80",
+        desc: "Templo romano milenar com acesso totalmente plano, rodeado por praças charmosas e restaurantes acessíveis.",
+        address: "Piazza della Rotonda, 00186 Roma, Itália."
+      },
+      trevi: {
+        title: "Fontana di Trevi",
+        img: "https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?auto=format&fit=crop&w=600&q=80",
+        desc: "Uma das fontes barrocas mais famosas do mundo, localizada no centro de Roma.",
+        address: "Piazza di Trevi, 00187 Roma, Itália."
+      },
+      coliseu: {
+        title: "Coliseu Romano",
+        img: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80",
+        desc: "O maior anfiteatro do mundo antigo, símbolo histórico da civilização romana com elevadores panorâmicos.",
+        address: "Piazza del Colosseo, 1, 00184 Roma, Itália."
+      }
+    };
+
+    // Dynamic Agenda Database per Day
+    const agendaData = {
+      seg14: {
+        city: "Roma & Vaticano, Itália", cc: "it",
+        items: [
+          { period: "MANHÃ", key: "vaticano", title: "Basílica de São Pedro", wiki: "Basílica de São Pedro", time: "09:00 - 11:30", img: "", alt: "Basílica de São Pedro no Vaticano" },
+          { period: "TARDE", key: "pantheon", title: "Panteão & Piazza Navona", wiki: "Panteão (Roma)", time: "14:00 - 17:00", img: "", alt: "Panteão em Roma" }
+        ]
+      },
+      ter15: {
+        city: "Paris, França", cc: "fr",
+        items: [
+          { period: "MANHÃ", key: "paris", title: "Museu do Louvre", wiki: "Museu do Louvre", time: "09:30 - 12:30", img: "", alt: "Museu do Louvre em Paris" },
+          { period: "TARDE", key: "paris", title: "Passeio pelo Rio Sena", wiki: "Rio Sena", time: "15:00 - 17:00", img: "", alt: "Rio Sena em Paris" }
+        ]
+      },
+      qua16: {
+        city: "Roma, Itália", cc: "it",
+        items: [
+          { period: "MANHÃ", key: "trevi", title: "Fontana di Trevi", wiki: "Fontana de Trevi", time: "10:00 - 11:00", img: "", alt: "Fonte Fontana di Trevi em Roma" },
+          { period: "TARDE", key: "coliseu", title: "Coliseu Romano", wiki: "Coliseu", time: "16:00 - 18:00", img: "", alt: "Anfiteatro do Coliseu Romano" }
+        ]
+      }
+    };
+
+
+    // ---------- Regras da agenda: local e horário ----------
+    const DAY_KEYS = ['seg14', 'ter15', 'qua16'];
+    const DAY_LABELS = { seg14: 'Seg 14', ter15: 'Ter 15', qua16: 'Qua 16' };
+    const CC_NAMES = { it: 'Itália', fr: 'França', jp: 'Japão', us: 'Estados Unidos', gb: 'Reino Unido', br: 'Brasil', au: 'Austrália', ae: 'Emirados Árabes', eg: 'Egito', nl: 'Países Baixos', za: 'África do Sul', es: 'Espanha', pt: 'Portugal', gr: 'Grécia', pe: 'Peru', tr: 'Turquia', cz: 'República Tcheca', ar: 'Argentina', id: 'Indonésia', ma: 'Marrocos', de: 'Alemanha', ca: 'Canadá' };
+    const CC_BY_KEY = { roma: 'it', paris: 'fr', tokyo: 'jp', nyc: 'us', londres: 'gb', rio: 'br', sidney: 'au', dubai: 'ae', cairo: 'eg', amsterda: 'nl', capetown: 'za', barcelona: 'es', curitiba: 'br', lisboa: 'pt', veneza: 'it', santorini: 'gr', machupicchu: 'pe', istambul: 'tr', praga: 'cz', buenosaires: 'ar', bali: 'id', marrakech: 'ma', berlim: 'de', vancouver: 'ca', fozdoiguacu: 'br', noronha: 'br', gramado: 'br', salvador: 'br', vaticano: 'it', pantheon: 'it', trevi: 'it', coliseu: 'it' };
+    const normCC = c => { c = (c || '').toLowerCase(); return c === 'va' || c === 'sm' ? 'it' : c; }; // Vaticano conta como Roma/Itália
+    const ccName = c => CC_NAMES[c] || (c ? c.toUpperCase() : '');
+    // Lugares já adicionados em dias do roteiro herdam o país do dia
+    DAY_KEYS.forEach(k => agendaData[k].items.forEach(i => { i.cc = i.cc || agendaData[k].cc; }));
+
+    function destCC(key) {
+      const d = destinationData[key] || {};
+      return normCC(d.cc || CC_BY_KEY[key]);
+    }
+    function daysForCountry(cc) {
+      return cc ? DAY_KEYS.filter(k => normCC(agendaData[k].cc) === cc) : DAY_KEYS.slice();
+    }
+    function toMin(h, m) { return (+h) * 60 + (+m); }
+    function parseRange(time) {
+      const m = String(time).match(/(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/);
+      if (!m) return null;
+      const s = toMin(m[1], m[2]);
+      const e = m[3] ? toMin(m[3], m[4]) : s + 60; // sem horário final: assume 1 hora
+      return { s, e };
+    }
+    function findConflict(dayKey, start, end, ignoreItem) {
+      const s = parseRange(end ? `${start} - ${end}` : start);
+      if (!s) return null;
+      return (agendaData[dayKey]?.items || []).find(it => {
+        if (it === ignoreItem) return false;
+        const r = parseRange(it.time);
+        return r && s.s < r.e && r.s < s.e;
+      }) || null;
+    }
+    function periodFor(start) {
+      const h = +start.split(':')[0];
+      return h < 12 ? 'MANHÃ' : (h < 18 ? 'TARDE' : 'NOITE');
+    }
+    function showFormError(id, msg) {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = msg; el.style.display = 'block'; }
+      triggerHaptic('medium');
+      if (speechEnabled) speakText(msg);
+    }
+    const ERR_STYLE = 'display:none; color:#fca5a5; font-weight:700; font-size:0.85rem; margin-top:8px;';
+
+    // ---------- Imagem de acordo com o lugar ----------
+    const GLOBE_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='%23334155'/><text x='150' y='170' font-size='90' text-anchor='middle'>🌍</text></svg>";
+    const PLACE_WIKI = { roma: 'Coliseu', paris: 'Torre Eiffel', tokyo: 'Tóquio', nyc: 'Times Square', londres: 'Big Ben', rio: 'Cristo Redentor', sidney: 'Ópera de Sydney', dubai: 'Burj Khalifa', cairo: 'Pirâmides de Gizé', amsterda: 'Amsterdã', capetown: 'Montanha da Mesa', barcelona: 'Sagrada Família', curitiba: 'Jardim Botânico de Curitiba', vaticano: 'Basílica de São Pedro', pantheon: 'Panteão (Roma)', trevi: 'Fontana de Trevi', coliseu: 'Coliseu' };
+    const IMG_CACHE = {};
+    const WIKI_BASE = 'https://{lang}.wikipedia.org/w/api.php?format=json&origin=*&action=query&prop=pageimages&piprop=thumbnail&pithumbsize=500';
+    const COMMONS_Q = 'https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&iiurlwidth=500&gsrsearch=';
+
+    // Imagem de reserva com o nome do lugar (nunca fica sem imagem, nem offline)
+    function placeholderFor(name) {
+      name = String(name || 'Lugar').split(' - ')[0].trim();
+      let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
+      const words = name.split(/\s+/), lines = []; let cur = '';
+      words.forEach(w => { if ((cur + ' ' + w).trim().length > 14 && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+      if (cur) lines.push(cur);
+      const shown = lines.slice(0, 3);
+      const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+      const text = shown.map((l, i) => `<text x="150" y="${178 + i * 28 - (shown.length - 1) * 8}" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#fff" text-anchor="middle">${esc(l)}</text>`).join('');
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h},55%,38%)"/><stop offset="1" stop-color="hsl(${(h + 45) % 360},60%,16%)"/></linearGradient></defs><rect width="300" height="300" fill="url(#g)"/><path d="M150 60c-22 0-40 17-40 39 0 29 40 62 40 62s40-33 40-62c0-22-18-39-40-39z" fill="#fff" fill-opacity=".9"/><circle cx="150" cy="99" r="14" fill="hsl(${h},55%,30%)"/>${text}</svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    async function wikiThumb(url, pick) {
+      try {
+        const j = await (await fetch(url)).json();
+        return pick(Object.values(j.query?.pages || {})) || '';
+      } catch (e) { return ''; }
+    }
+    const firstThumb = pgs => (pgs.filter(x => x.thumbnail).sort((a, b) => (a.index || 0) - (b.index || 0))[0] || {}).thumbnail?.source;
+    const firstCommons = pgs => {
+      const ok = pgs.map(x => ({ i: x.index || 0, ii: (x.imageinfo || [])[0] }))
+        .filter(x => x.ii && /^image\/(jpeg|png|webp)$/.test(x.ii.mime || '')).sort((a, b) => a.i - b.i)[0];
+      return ok ? (ok.ii.thumburl || ok.ii.url) : '';
+    };
+
+    // Procura a foto do lugar em várias etapas até achar uma
+    async function findPlaceImage(title, query, context) {
+      const pt = WIKI_BASE.replace('{lang}', 'pt'), en = WIKI_BASE.replace('{lang}', 'en');
+      const q = query || title, qc = context ? `${q} ${context}` : '';
+      let src = '';
+      if (title) src = await wikiThumb(pt + '&redirects=1&titles=' + encodeURIComponent(title), firstThumb);
+      if (!src && q) src = await wikiThumb(pt + '&generator=search&gsrlimit=6&gsrsearch=' + encodeURIComponent(q), firstThumb);
+      if (!src && qc) src = await wikiThumb(pt + '&generator=search&gsrlimit=6&gsrsearch=' + encodeURIComponent(qc), firstThumb);
+      if (!src && q) src = await wikiThumb(en + '&generator=search&gsrlimit=6&gsrsearch=' + encodeURIComponent(qc || q), firstThumb);
+      if (!src && (qc || q)) src = await wikiThumb(COMMONS_Q + encodeURIComponent(qc || q), firstCommons);
+      return src;
+    }
+
+    function fetchPlaceImage(title, query, context) {
+      const k = [title, query, context].join('|');
+      if (!IMG_CACHE[k]) {
+        IMG_CACHE[k] = findPlaceImage(title, query, context).then(src => { if (!src) delete IMG_CACHE[k]; return src; });
+      }
+      return IMG_CACHE[k];
+    }
+
+    function setImg(el, src) { if (!el) return; delete el.dataset.fallback; el.src = src; }
+
+    function agendaContext(day) { return (agendaData[day].city || '').split(',')[0].replace(/\s*&.*/, '').trim(); }
+
+    function resolveAgendaImages() {
+      DAY_KEYS.forEach(day => agendaData[day].items.forEach(item => {
+        if (item.img || item.imgPending || (item.imgTries || 0) >= 3) return;
+        item.imgPending = true;
+        item.imgTries = (item.imgTries || 0) + 1;
+        fetchPlaceImage(item.wiki, item.title, agendaContext(day)).then(src => {
+          item.imgPending = false;
+          if (!src) return;
+          item.img = src;
+          if (document.getElementById('screen-agenda')?.classList.contains('active') && !document.getElementById('info-modal')?.classList.contains('active')) renderAgenda();
+        });
+      }));
+    }
+
+    async function ensureDestinationImage(key) {
+      const d = destinationData[key];
+      if (!d || d.imgDone || d.imgBusy) return;
+      d.imgBusy = true;
+      const src = await fetchPlaceImage(PLACE_WIKI[key] || d.wiki, (d.title || '').split(' - ')[0]);
+      d.imgBusy = false;
+      if (src) {
+        d.img = src; d.imgDone = true;
+        if (currentDestinationKey === key) setImg(document.getElementById('detail-img'), src);
+      }
+    }
+
+    // Quando a internet voltar, tenta de novo as imagens que faltaram
+    window.addEventListener('online', () => {
+      DAY_KEYS.forEach(d => agendaData[d].items.forEach(i => { i.imgTries = 0; }));
+      loadHotImages(); resolveAgendaImages();
+    });
+
+    // MICROINTERACTION: Trigger Haptic Feedback (Vibration)
+    window.triggerHaptic = function(type = 'light') {
+      if (reduceMotionEnabled || !('vibrate' in navigator)) return;
+      if (type === 'light') navigator.vibrate(15);
+      if (type === 'medium') navigator.vibrate(30);
+      if (type === 'success') navigator.vibrate([20, 50, 20]);
+    };
+
+    // MICROINTERACTION: Favorite Heart Toggle
+    window.toggleFavorite = function(event, btnEl, title) {
+      event.stopPropagation();
+      const isActive = btnEl.classList.toggle('active');
+      const icon = btnEl.querySelector('i');
+      
+      triggerHaptic('medium');
+
+      if (isActive) {
+        icon.className = 'fa-solid fa-heart';
+        showToast(`${title} adicionado aos Favoritos!`);
+        if (speechEnabled) speakText(`${title} adicionado aos favoritos`);
+      } else {
+        icon.className = 'fa-regular fa-heart';
+        showToast(`${title} removido dos Favoritos`);
+        if (speechEnabled) speakText(`${title} removido dos favoritos`);
+      }
+    };
+
+    // MICROINTERACTION: Task/Schedule Checkmark Toggle
+    window.toggleTaskCheck = function(event, btnEl, title) {
+      event.stopPropagation();
+      const isChecked = btnEl.classList.toggle('checked');
+      
+      triggerHaptic('success');
+
+      if (isChecked) {
+        showToast(`Marcado como visitado: ${title}`);
+        if (speechEnabled) speakText(`${title} marcado como visitado`);
+      } else {
+        showToast(`Desmarcado: ${title}`);
+      }
+    };
+
+    // Speech Synthesis helper
+    window.speakText = function(text) {
+      if (!speechEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    };
+
+    window.toggleSpeech = function(enable) {
+      speechEnabled = enable;
+      const banner = document.getElementById('tts-banner');
+      const checkbox = document.getElementById('toggle-speech-input');
+      if (checkbox) checkbox.checked = enable;
+      if (banner) banner.classList.toggle('active', enable);
+      
+      triggerHaptic('light');
+
+      if (enable) {
+        speakText('Leitor de voz ativado.');
+        showToast('Leitor de Voz ativado');
+      } else {
+        window.speechSynthesis?.cancel();
+        showToast('Leitor de Voz desativado');
+      }
+    };
+
+    window.setFontSize = function(size, btnEl) {
+      document.documentElement.style.setProperty('--font-scale', size);
+      document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      triggerHaptic('light');
+      showToast('Tamanho do texto ajustado');
+      if (speechEnabled) speakText('Tamanho do texto modificado');
+    };
+
+    window.toggleHighContrast = function(enable) {
+      document.body.classList.toggle('high-contrast', enable);
+      triggerHaptic('light');
+      showToast(enable ? 'Modo Alto Contraste ativado' : 'Modo Alto Contraste desativado');
+      if (speechEnabled) speakText(enable ? 'Alto contraste ativado' : 'Alto contraste desativado');
+    };
+
+    window.toggleDyslexicFont = function(enable) {
+      document.body.classList.toggle('dyslexic-font', enable);
+      triggerHaptic('light');
+      showToast(enable ? 'Fonte legível ativada' : 'Fonte padrão ativada');
+    };
+
+    window.toggleReduceMotion = function(enable) {
+      reduceMotionEnabled = enable;
+      document.body.classList.toggle('reduce-motion', enable);
+      triggerHaptic('light');
+      showToast(enable ? 'Animações reduzidas' : 'Animações ativadas');
+    };
+
+    window.toggleA11yPanel = function() {
+      const panel = document.getElementById('a11y-panel');
+      if (panel) {
+        panel.classList.toggle('active');
+        triggerHaptic('light');
+        if (panel.classList.contains('active') && speechEnabled) {
+          speakText('Central de acessibilidade aberta');
+        }
+      }
+    };
+
+    window.showScreen = function(screenId) {
+      triggerHaptic('light');
+      const screens = document.querySelectorAll('.screen');
+      screens.forEach(s => s.classList.remove('active'));
+
+      const target = document.getElementById(screenId);
+      if (target) {
+        target.classList.add('active');
+        const screenLabel = target.getAttribute('aria-label') || 'Nova tela';
+        if (speechEnabled) speakText(screenLabel);
+      }
+
+      const navBtns = document.querySelectorAll('.nav-btn');
+      navBtns.forEach(btn => btn.classList.remove('active'));
+
+      if (screenId === 'screen-home') document.getElementById('nav-home')?.classList.add('active');
+      if (screenId === 'screen-agenda') document.getElementById('nav-agenda')?.classList.add('active');
+      if (screenId === 'screen-mapa') document.getElementById('nav-mapa')?.classList.add('active');
+      if (screenId === 'screen-profile') document.getElementById('nav-profile')?.classList.add('active');
+
+      const topBtns = document.querySelectorAll('.top-controls .control-btn');
+      topBtns.forEach(b => b.classList.remove('active'));
+    };
+
+    window.showDestinationDetail = function(key) {
+      triggerHaptic('light');
+      const data = destinationData[key] || destinationData.roma;
+      currentDestinationKey = destinationData[key] ? key : 'roma';
+      currentDestinationName = data.title;
+      document.getElementById('detail-title').textContent = data.title;
+      setImg(document.getElementById('detail-img'), data.img || placeholderFor(data.title));
+      document.getElementById('detail-desc').textContent = data.desc;
+      document.getElementById('detail-address').textContent = data.address;
+      showScreen('screen-detail');
+      ensureDestinationImage(currentDestinationKey);
+      if (data.wiki && !data.loaded) {
+        const lang = data.wikiLang || 'pt';
+        fetch(`https://${lang}.wikipedia.org/w/api.php?format=json&origin=*&action=query&redirects=1&prop=extracts|pageimages&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=600&titles=` + encodeURIComponent(data.wiki))
+          .then(r => r.json())
+          .then(j => {
+            const pg = Object.values(j.query?.pages || {})[0];
+            if (!pg) return;
+            data.loaded = true;
+            if (pg.extract) data.desc = pg.extract.split('\n')[0];
+            if (!data.img && pg.thumbnail) data.img = pg.thumbnail.source;
+            if (currentDestinationName === data.title) {
+              document.getElementById('detail-desc').textContent = data.desc;
+              if (data.img) document.getElementById('detail-img').src = data.img;
+            }
+          }).catch(() => {});
+      }
+    };
+
+    window.addCurrentToSchedule = function() {
+      const cc = destCC(currentDestinationKey);
+      const days = daysForCountry(cc);
+      const countryLabel = (destinationData[currentDestinationKey] || {}).ccName || ccName(cc || '');
+
+      if (!days.length) {
+        const places = [...new Set(DAY_KEYS.map(k => ccName(normCC(agendaData[k].cc))))].join(' e ');
+        triggerHaptic('medium');
+        openInfoModal(
+          'Não é possível adicionar',
+          `<p><strong>${escapeHtml(currentDestinationName)}</strong> fica em <strong>${escapeHtml(countryLabel)}</strong>, mas a sua agenda tem dias apenas em <strong>${escapeHtml(places)}</strong>.</p>
+           <p style="margin-top:8px; color: var(--text-muted);">Só é possível adicionar lugares do mesmo país em que você estará no dia.</p>`,
+          `<button class="btn-primary ripple-target" onclick="closeInfoModal()">ENTENDIDO</button>`
+        );
+        if (speechEnabled) speakText('Esse lugar fica em outro país e não pode ser adicionado à agenda.');
+        return;
+      }
+
+      const dayOpts = days.map(k => `<option value="${k}" ${k === currentSelectedDay ? 'selected' : ''}>${DAY_LABELS[k]} — ${escapeHtml(agendaData[k].city)}</option>`).join('');
+      openInfoModal(
+        'Adicionar à Agenda',
+        `<form onsubmit="event.preventDefault(); confirmAddToSchedule();">
+          <p style="margin-bottom:10px; font-weight:800;">${escapeHtml(currentDestinationName)}</p>
+          <div class="form-group">
+            <label for="add-day">Dia</label>
+            <select id="add-day">${dayOpts}</select>
+          </div>
+          <div class="form-group">
+            <label for="add-start">Início</label>
+            <input type="time" id="add-start" value="10:00" required />
+          </div>
+          <div class="form-group">
+            <label for="add-end">Fim (opcional)</label>
+            <input type="time" id="add-end" value="11:00" />
+          </div>
+          <p id="add-error" role="alert" style="${ERR_STYLE}"></p>
+        </form>`,
+        `<button class="btn-primary ripple-target" onclick="confirmAddToSchedule()">ADICIONAR À AGENDA</button>`
+      );
+    };
+
+    window.confirmAddToSchedule = function() {
+      const day = document.getElementById('add-day')?.value;
+      const start = document.getElementById('add-start')?.value;
+      const end = document.getElementById('add-end')?.value;
+      if (!day || !start) return showFormError('add-error', 'Escolha o dia e o horário de início.');
+      if (end && end <= start) return showFormError('add-error', 'O horário final precisa ser depois do início.');
+
+      const conflict = findConflict(day, start, end);
+      if (conflict) return showFormError('add-error', `Já existe "${conflict.title}" neste horário (${conflict.time}). Escolha outro horário.`);
+
+      const data = destinationData[currentDestinationKey] || {};
+      agendaData[day].items.push({
+        period: periodFor(start),
+        key: currentDestinationKey,
+        title: currentDestinationName.split(' - ')[0],
+        time: end ? `${start} - ${end}` : start,
+        cc: destCC(currentDestinationKey) || normCC(agendaData[day].cc),
+        img: data.img || '',
+        wiki: PLACE_WIKI[currentDestinationKey] || data.wiki || '',
+        alt: currentDestinationName
+      });
+      closeInfoModal();
+      renderAgenda();
+      triggerHaptic('success');
+      showAgendaAddedAnimation(currentDestinationName.split(' - ')[0]);
+      if (speechEnabled) speakText('Lugar adicionado à agenda.');
+    };
+
+    // MICROINTERACTION: animação de confirmação ao adicionar à agenda
+    window.showAgendaAddedAnimation = function(name) {
+      document.querySelectorAll('.agenda-added-overlay').forEach(el => el.remove());
+      const overlay = document.createElement('div');
+      overlay.className = 'agenda-added-overlay' + (reduceMotionEnabled ? ' reduced' : '');
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.innerHTML = `
+        <div class="agenda-added-card">
+          <div class="agenda-added-icon" aria-hidden="true">
+            <svg viewBox="0 0 84 84"><circle class="circle" cx="42" cy="42" r="40"/><path class="tick" d="M25 43 L37 55 L60 30"/></svg>
+          </div>
+          <div class="agenda-added-title">Lugar adicionado à agenda</div>
+          <div class="agenda-added-name">${escapeHtml(name)}</div>
+        </div>`;
+      document.body.appendChild(overlay);
+      setTimeout(() => overlay.remove(), 2100);
+    };
+
+    window.setCategoryFilter = function(category, btnEl) {
+      triggerHaptic('light');
+      activeCategoryFilter = category;
+      document.querySelectorAll('.chip-filter').forEach(c => c.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      filterDestinations();
+    };
+
+    let searchTimer = null;
+    let searchSeq = 0;
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    window.filterDestinations = function() {
+      const raw = (document.getElementById('search-input')?.value || '').trim();
+      const q = raw.toLowerCase();
+      const items = document.querySelectorAll('.destination-item');
+      let localMatches = 0;
+
+      items.forEach(item => {
+        const title = item.querySelector('.dest-title')?.textContent.toLowerCase() || '';
+        const tags = item.getAttribute('data-tags') || '';
+        const matchesQuery = title.includes(q);
+        const matchesCategory = activeCategoryFilter === 'all' || tags.includes(activeCategoryFilter);
+        const show = matchesQuery && matchesCategory;
+        item.style.display = show ? 'block' : 'none';
+        if (show) localMatches++;
+      });
+
+      const results = document.getElementById('search-results');
+      const hotHeader = document.getElementById('hot-header');
+      clearTimeout(searchTimer);
+
+      if (raw.length < 2) {
+        searchSeq++;
+        results.style.display = 'none';
+        results.innerHTML = '';
+        if (hotHeader) hotHeader.style.display = 'flex';
+        return;
+      }
+
+      // Pesquisa livre: qualquer lugar, não só os destinos em alta
+      if (hotHeader) hotHeader.style.display = localMatches ? 'flex' : 'none';
+      results.style.display = 'block';
+      results.innerHTML = `<h3 style="font-size: 1.1rem; margin-bottom: 10px;">Resultados para "${escapeHtml(raw)}"</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Buscando lugares...</p>`;
+      searchTimer = setTimeout(() => searchPlaces(raw), 400);
+    };
+
+    // ---------- Busca de lugares para visitar (OpenStreetMap + Wikipédia para fotos) ----------
+    const TYPE_LABELS = {
+      museum: 'Museu', attraction: 'Atração turística', viewpoint: 'Mirante', zoo: 'Zoológico',
+      theme_park: 'Parque temático', aquarium: 'Aquário', gallery: 'Galeria de arte',
+      castle: 'Castelo', monument: 'Monumento', memorial: 'Memorial', ruins: 'Ruínas',
+      archaeological_site: 'Sítio arqueológico', fort: 'Forte', palace: 'Palácio', church: 'Igreja',
+      cathedral: 'Catedral', beach: 'Praia', peak: 'Montanha', waterfall: 'Cachoeira', bay: 'Baía',
+      volcano: 'Vulcão', park: 'Parque', nature_reserve: 'Reserva natural', garden: 'Jardim',
+      city: 'Cidade', town: 'Cidade', village: 'Vilarejo', island: 'Ilha', country: 'País',
+      state: 'Estado / Região', municipality: 'Município', place_of_worship: 'Local de culto'
+    };
+    const VISIT_CLASSES = ['tourism', 'historic', 'natural', 'leisure'];
+    const PLACE_TYPES = ['city', 'town', 'village', 'municipality', 'island', 'country', 'state', 'region'];
+    const GOOD_NATURAL = ['beach', 'peak', 'waterfall', 'bay', 'volcano', 'cave_entrance', 'hot_spring', 'cliff'];
+    const GOOD_LEISURE = ['park', 'nature_reserve', 'garden'];
+    const NOTABLE_CLASSES = ['amenity', 'building', 'man_made'];
+
+    function typeLabel(cls, type, tags) {
+      return TYPE_LABELS[type] || (tags && (TYPE_LABELS[tags.tourism] || TYPE_LABELS[tags.historic])) || 'Local para visitar';
+    }
+
+    function isVisitable(r) {
+      const cls = r.class, type = r.type, hasWiki = !!(r.extratags && r.extratags.wikipedia);
+      if (cls === 'natural') return GOOD_NATURAL.includes(type);
+      if (cls === 'leisure') return GOOD_LEISURE.includes(type);
+      if (cls === 'tourism') return !['hotel', 'hostel', 'motel', 'guest_house', 'apartment', 'chalet', 'information', 'camp_site'].includes(type);
+      if (cls === 'historic') return true;
+      if (cls === 'place' || cls === 'boundary') return PLACE_TYPES.includes(r.addresstype) || PLACE_TYPES.includes(type);
+      if (NOTABLE_CLASSES.includes(cls)) return hasWiki;
+      return false;
+    }
+
+    // Busca fotos e descrição curta na Wikipédia a partir de títulos "idioma:Título"
+    async function fetchWikiThumbs(refs) {
+      const byLang = {};
+      refs.forEach(ref => {
+        if (!ref || !ref.includes(':')) return;
+        const i = ref.indexOf(':');
+        const lang = ref.slice(0, i).toLowerCase(), title = ref.slice(i + 1);
+        if (!/^[a-z-]{2,10}$/.test(lang)) return;
+        (byLang[lang] = byLang[lang] || new Set()).add(title);
+      });
+      const out = {};
+      await Promise.all(Object.entries(byLang).map(async ([lang, set]) => {
+        const titles = [...set].slice(0, 50);
+        try {
+          const url = `https://${lang}.wikipedia.org/w/api.php?format=json&origin=*&action=query&redirects=1&prop=pageimages|description&piprop=thumbnail&pithumbsize=400&titles=` + encodeURIComponent(titles.join('|'));
+          const j = await (await fetch(url)).json();
+          const q = j.query || {};
+          const map = {};
+          (q.normalized || []).forEach(n => map[n.to] = n.from);
+          const redirMap = {};
+          (q.redirects || []).forEach(r => redirMap[r.to] = r.from);
+          Object.values(q.pages || {}).forEach(pg => {
+            const orig = [pg.title, redirMap[pg.title], map[redirMap[pg.title]], map[pg.title]].filter(Boolean);
+            orig.forEach(o => { out[`${lang}:${o}`] = { img: pg.thumbnail?.source || '', desc: pg.description || '', title: pg.title, lang }; });
+          });
+        } catch (e) { /* ignora esse idioma */ }
+      }));
+      return out;
+    }
+
+    function placeCard(pl) {
+      const key = 'web_' + pl.id;
+      destinationData[key] = { title: pl.name, img: pl.img, desc: `${pl.label}${pl.desc ? ' — ' + pl.desc : ''}`, address: pl.address || pl.name, wiki: pl.wikiTitle, wikiLang: pl.wikiLang, cc: pl.cc, ccName: pl.ccName };
+      return `
+        <article class="card card-interactive destination-item ripple-target" tabindex="0" role="button" onclick="showDestinationDetail('${key}')" aria-label="Ver detalhes de ${escapeHtml(pl.name)}" style="margin-bottom: 12px; padding-right: 48px;">
+          <div class="card-row">
+            <img class="card-img" src="${escapeHtml(pl.img)}" alt="${escapeHtml(pl.name)}" />
+            <div>
+              <h4 class="dest-title" style="margin: 4px 0 2px 0;">${escapeHtml(pl.name)}</h4>
+              <span style="display: inline-block; font-size: 0.72rem; font-weight: 800; color: var(--primary); margin-bottom: 2px;"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ${escapeHtml(pl.label)}</span>
+              <p style="font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(pl.desc || pl.address || '')}</p>
+            </div>
+          </div>
+          <button class="fav-btn" onclick="toggleFavorite(event, this, '${escapeHtml(pl.name).replace(/'/g, '&#39;')}')" aria-label="Salvar ${escapeHtml(pl.name)} nos Favoritos" style="position: absolute; right: 8px; top: 8px;">
+            <i class="fa-regular fa-heart"></i>
+          </button>
+        </article>`;
+    }
+
+    async function searchPlaces(query) {
+      const seq = ++searchSeq;
+      const results = document.getElementById('search-results');
+      const heading = t => `<h3 style="font-size: 1.1rem; margin: 6px 0 10px;">${t}</h3>`;
+      const empty = '<p style="color: var(--text-muted);">Nenhum lugar para visitar encontrado. Tente o nome de uma cidade, país, praia ou ponto turístico.</p>';
+      try {
+        // 1) Lugares que batem com a pesquisa
+        const nUrl = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=15&addressdetails=1&extratags=1&accept-language=pt-BR&q=' + encodeURIComponent(query);
+        const raw = await (await fetch(nUrl)).json();
+        if (seq !== searchSeq) return;
+        const cands = raw.filter(isVisitable).slice(0, 8);
+        const thumbs1 = await fetchWikiThumbs(cands.map(r => r.extratags && r.extratags.wikipedia));
+        if (seq !== searchSeq) return;
+
+        const main = cands.map(r => {
+          const ref = r.extratags && r.extratags.wikipedia;
+          const t = ref && thumbs1[ref];
+          if (!t || !t.img) return null;
+          return {
+            id: 'osm' + r.osm_id, name: r.name || r.display_name.split(',')[0], img: t.img,
+            label: typeLabel(r.class, r.type), desc: t.desc,
+            address: r.display_name, wikiTitle: t.title, wikiLang: t.lang,
+            lat: +r.lat, lon: +r.lon, isPlace: r.class === 'place' || r.class === 'boundary',
+            cc: normCC(r.address && r.address.country_code), ccName: r.address && r.address.country
+          };
+        }).filter(Boolean).filter((p, i, arr) => arr.findIndex(x => x.name === p.name) === i).slice(0, 5);
+
+        if (!main.length) { results.innerHTML = heading(`Resultados para "${escapeHtml(query)}"`) + empty; return; }
+
+        let html = heading('Destinos') + main.map(placeCard).join('');
+        results.innerHTML = html + '<p style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Buscando o que visitar por perto...</p>';
+
+        // 2) Pontos turísticos ao redor do melhor resultado
+        const a = main[0];
+        const radius = a.isPlace ? 8000 : 3000;
+        const around = `(around:${radius},${a.lat},${a.lon})`;
+        const ql = `[out:json][timeout:20];(`
+          + `nwr${around}["tourism"~"^(attraction|museum|viewpoint|zoo|theme_park|aquarium|gallery)$"]["wikipedia"];`
+          + `nwr${around}["historic"~"^(castle|monument|memorial|ruins|archaeological_site|fort|palace)$"]["wikipedia"];`
+          + `nwr${around}["natural"~"^(beach|peak|waterfall)$"]["wikipedia"];`
+          + `nwr${around}["leisure"~"^(park|garden|nature_reserve)$"]["wikipedia"];`
+          + `);out center 60;`;
+        const oj = await (await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(ql))).json();
+        if (seq !== searchSeq) return;
+        const els = (oj.elements || []).filter(e => e.tags && (e.tags['name:pt'] || e.tags.name));
+        const thumbs2 = await fetchWikiThumbs(els.map(e => e.tags.wikipedia));
+        if (seq !== searchSeq) return;
+
+        const used = new Set(main.map(m => m.name));
+        const nearby = els.map(e => {
+          const t = thumbs2[e.tags.wikipedia];
+          const name = e.tags['name:pt'] || e.tags.name;
+          if (!t || !t.img || used.has(name)) return null;
+          used.add(name);
+          const kind = e.tags.tourism || e.tags.historic || e.tags.natural || e.tags.leisure;
+          return { id: 'osm' + e.type[0] + e.id, name, img: t.img, label: typeLabel('', kind, e.tags), desc: t.desc, address: name + ' — ' + a.name, wikiTitle: t.title, wikiLang: t.lang, cc: a.cc, ccName: a.ccName };
+        }).filter(Boolean).slice(0, 10);
+
+        if (nearby.length) html += heading(`Para visitar perto de ${escapeHtml(a.name)}`) + nearby.map(placeCard).join('');
+        results.innerHTML = html;
+      } catch (err) {
+        if (seq !== searchSeq) return;
+        results.innerHTML = heading(`Resultados para "${escapeHtml(query)}"`) + '<p style="color: var(--text-muted);">Não foi possível buscar agora. Verifique sua conexão com a internet e tente de novo.</p>';
+      }
+    }
+
+    window.selectAgendaDay = function(btnEl, dayKey, dayLabel) {
+      triggerHaptic('light');
+      currentSelectedDay = dayKey;
+      document.querySelectorAll('.day-btn').forEach(b => {
+        b.classList.remove('active');
+        b.removeAttribute('aria-current');
+      });
+      btnEl.classList.add('active');
+      btnEl.setAttribute('aria-current', 'date');
+
+      renderAgenda();
+      showToast(`Exibindo agenda para ${dayLabel}`);
+      if (speechEnabled) speakText(`Agenda alterada para ${dayLabel}`);
+    };
+
+    let agendaEditMode = false;
+    const PERIOD_ORDER = { 'MANHÃ': 0, 'TARDE': 1, 'NOITE': 2 };
+
+    function renderAgenda() {
+      const data = agendaData[currentSelectedDay] || agendaData.qua16;
+      const container = document.getElementById('agenda-items-list');
+      if (!container) return;
+
+      const sorted = data.items
+        .map((item, idx) => ({ item, idx }))
+        .sort((x, y) => (PERIOD_ORDER[x.item.period] ?? 9) - (PERIOD_ORDER[y.item.period] ?? 9) || x.idx - y.idx);
+
+      let html = agendaEditMode && sorted.length > 1
+        ? '<button class="control-btn ripple-target" style="width:100%; min-height:40px; margin-bottom:8px;" onclick="sortAgendaByTime()"><i class="fa-solid fa-arrow-down-1-9" aria-hidden="true"></i> Organizar por horário</button>'
+        : '';
+      let currentPeriod = '';
+      if (!sorted.length) {
+        html = '<p style="color: var(--text-muted); text-align: center; padding: 24px 0;">Nenhuma atividade neste dia. Toque em "Add Atividade".</p>';
+      }
+      sorted.forEach(({ item, idx }) => {
+        if (item.period !== currentPeriod) {
+          currentPeriod = item.period;
+          html += `<h3 style="color: var(--text-muted); font-size: 0.85rem; margin: 12px 0 8px 0; text-transform: uppercase;">${currentPeriod}</h3>`;
+        }
+        const samePeriod = sorted.filter(s => s.item.period === item.period);
+        const pos = samePeriod.findIndex(s => s.idx === idx);
+        const dis = (c) => c ? 'disabled style="opacity:.35"' : '';
+        const actions = agendaEditMode
+          ? `<div style="display: grid; grid-template-columns: repeat(2, 34px); gap: 6px;">
+               <button class="agenda-action-btn" ${dis(pos === 0)} onclick="moveAgendaEvent(event, ${idx}, -1)" aria-label="Mover ${item.title} para cima"><i class="fa-solid fa-arrow-up"></i></button>
+               <button class="agenda-action-btn" ${dis(pos === samePeriod.length - 1)} onclick="moveAgendaEvent(event, ${idx}, 1)" aria-label="Mover ${item.title} para baixo"><i class="fa-solid fa-arrow-down"></i></button>
+               <button class="agenda-action-btn" onclick="openEditEventModal(event, ${idx})" aria-label="Editar ${item.title}"><i class="fa-solid fa-pen"></i></button>
+               <button class="agenda-action-btn danger" onclick="deleteAgendaEvent(event, ${idx})" aria-label="Remover ${item.title}"><i class="fa-solid fa-trash"></i></button>
+             </div>`
+          : `<button class="check-btn" onclick="toggleTaskCheck(event, this, '${item.title.replace(/'/g, "\\'")}')" aria-label="Marcar ${item.title} como visitado"><i class="fa-solid fa-check"></i></button>`;
+        html += `
+          <article class="card card-interactive ripple-target" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;" onclick="${agendaEditMode ? `openEditEventModal(event, ${idx})` : `showDestinationDetail('${item.key}')`}">
+            <div class="card-row" style="flex: 1;">
+              <img class="card-img" src="${item.img || placeholderFor(item.title)}" alt="${item.alt}" />
+              <div>
+                <h4>${item.title}</h4>
+                <span style="font-size: 0.85rem; color: var(--accent-orange); font-weight: 700;"><i class="fa-regular fa-clock" aria-hidden="true"></i> ${item.time}</span>
+              </div>
+            </div>
+            ${actions}
+          </article>
+        `;
+      });
+      container.innerHTML = html;
+      resolveAgendaImages();
+    }
+
+    window.moveAgendaEvent = function(event, idx, dir) {
+      event.stopPropagation();
+      const items = agendaData[currentSelectedDay].items;
+      const period = items[idx].period;
+      const same = items.map((it, i) => ({ it, i })).filter(x => x.it.period === period).map(x => x.i);
+      const pos = same.indexOf(idx);
+      const target = same[pos + dir];
+      if (target === undefined) return;
+      [items[idx], items[target]] = [items[target], items[idx]];
+      triggerHaptic('light');
+      renderAgenda();
+    };
+
+    window.sortAgendaByTime = function() {
+      agendaData[currentSelectedDay].items.sort((a, b) => a.time.localeCompare(b.time));
+      triggerHaptic('success');
+      renderAgenda();
+      showToast('Atividades organizadas por horário');
+      if (speechEnabled) speakText('Atividades organizadas por horário');
+    };
+
+    window.toggleAgendaEdit = function() {
+      agendaEditMode = !agendaEditMode;
+      triggerHaptic('light');
+      const btn = document.getElementById('agenda-edit-btn');
+      btn.setAttribute('aria-pressed', agendaEditMode);
+      btn.setAttribute('aria-label', agendaEditMode ? 'Concluir edição da agenda' : 'Editar minha agenda');
+      btn.style.background = agendaEditMode ? 'var(--primary)' : '';
+      btn.style.color = agendaEditMode ? '#020617' : '';
+      btn.innerHTML = agendaEditMode
+        ? '<i class="fa-solid fa-check" aria-hidden="true"></i> <span>Concluir</span>'
+        : '<i class="fa-solid fa-pen" aria-hidden="true"></i> <span>Editar / Organizar</span>';
+      renderAgenda();
+      if (speechEnabled) speakText(agendaEditMode ? 'Modo de edição ativado' : 'Edição concluída');
+    };
+
+    window.openEditEventModal = function(event, idx) {
+      if (event) event.stopPropagation();
+      const item = agendaData[currentSelectedDay].items[idx];
+      const [start, end] = item.time.split('-').map(s => s.trim());
+      const opt = p => `<option value="${p}" ${item.period === p ? 'selected' : ''}>${p.charAt(0) + p.slice(1).toLowerCase()}</option>`;
+      openInfoModal(
+        'Editar Atividade',
+        `<form onsubmit="event.preventDefault(); saveEditedEvent(${idx});">
+          <div class="form-group">
+            <label for="edit-title">Nome do Local / Passeio</label>
+            <input type="text" id="edit-title" value="${item.title.replace(/"/g, '&quot;')}" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-start">Início</label>
+            <input type="time" id="edit-start" value="${start || ''}" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-end">Fim (opcional)</label>
+            <input type="time" id="edit-end" value="${end || ''}" />
+          </div>
+          <div class="form-group">
+            <label for="edit-period">Período do Dia</label>
+            <select id="edit-period">${opt('MANHÃ')}${opt('TARDE')}${opt('NOITE')}</select>
+          </div>
+          <div class="form-group">
+            <label for="edit-day">Dia</label>
+            <select id="edit-day">
+              ${daysForCountry(item.cc ? normCC(item.cc) : '').map(k => `<option value="${k}" ${k === currentSelectedDay ? 'selected' : ''}>${DAY_LABELS[k]}</option>`).join('')}
+            </select>
+          </div>
+          <p id="edit-error" role="alert" style="${ERR_STYLE}"></p>
+        </form>`,
+        `<button class="btn-primary ripple-target" onclick="saveEditedEvent(${idx})">SALVAR ALTERAÇÕES</button>`
+      );
+    };
+
+    window.saveEditedEvent = function(idx) {
+      const title = document.getElementById('edit-title')?.value.trim();
+      const start = document.getElementById('edit-start')?.value;
+      const end = document.getElementById('edit-end')?.value;
+      const period = document.getElementById('edit-period')?.value || 'MANHÃ';
+      if (!title || !start) return;
+      const item = agendaData[currentSelectedDay].items[idx];
+      const newDay = document.getElementById('edit-day')?.value || currentSelectedDay;
+      if (end && end <= start) return showFormError('edit-error', 'O horário final precisa ser depois do início.');
+      const clash = findConflict(newDay, start, end, item);
+      if (clash) return showFormError('edit-error', `Já existe "${clash.title}" neste horário (${clash.time}). Escolha outro horário.`);
+      if (item.title !== title) { item.title = title; item.wiki = ''; item.img = ''; item.imgPending = false; }
+      item.alt = title;
+      item.period = period;
+      item.time = end ? `${start} - ${end}` : start;
+      if (newDay !== currentSelectedDay) {
+        agendaData[currentSelectedDay].items.splice(idx, 1);
+        if (!agendaData[newDay]) agendaData[newDay] = { city: '', items: [] };
+        agendaData[newDay].items.push(item);
+        showToast(`'${title}' movido para outro dia`);
+      }
+      closeInfoModal();
+      renderAgenda();
+      triggerHaptic('success');
+      showToast(`'${title}' atualizado!`);
+      if (speechEnabled) speakText(`${title} atualizado na agenda`);
+    };
+
+    window.deleteAgendaEvent = function(event, idx) {
+      event.stopPropagation();
+      const [removed] = agendaData[currentSelectedDay].items.splice(idx, 1);
+      renderAgenda();
+      triggerHaptic('medium');
+      showToast(`'${removed.title}' removido da agenda`);
+      if (speechEnabled) speakText(`${removed.title} removido da agenda`);
+    };
+
+    window.openNewEventModal = function() {
+      openInfoModal(
+        'Adicionar Novo Evento no Itinerário',
+        `<form id="event-form" onsubmit="event.preventDefault(); submitNewEvent();">
+          <div class="form-group">
+            <label for="event-title">Nome do Local / Passeio</label>
+            <input type="text" id="event-title" placeholder="Ex: Central Park ou passeio de barco" required />
+          </div>
+          <div class="form-group">
+            <label for="event-time">Horário</label>
+            <input type="time" id="event-time" value="11:00" required />
+          </div>
+          <div class="form-group">
+            <label for="event-period">Período do Dia</label>
+            <select id="event-period">
+              <option value="MANHÃ">Manhã</option>
+              <option value="TARDE">Tarde</option>
+              <option value="NOITE">Noite</option>
+            </select>
+          </div>
+          <p id="event-error" role="alert" style="${ERR_STYLE}"></p>
+        </form>`,
+        `<button class="btn-primary ripple-target" onclick="submitNewEvent()">SALVAR NA AGENDA</button>`
+      );
+    };
+
+    window.submitNewEvent = function() {
+      const title = document.getElementById('event-title')?.value;
+      const time = document.getElementById('event-time')?.value;
+      const period = document.getElementById('event-period')?.value || 'MANHÃ';
+
+      if (!title) return;
+
+      const clash = findConflict(currentSelectedDay, time, '');
+      if (clash) return showFormError('event-error', `Já existe "${clash.title}" neste horário (${clash.time}). Escolha outro horário.`);
+
+      if (!agendaData[currentSelectedDay]) {
+        agendaData[currentSelectedDay] = { city: "Destino Global", items: [] };
+      }
+
+      agendaData[currentSelectedDay].items.push({
+        period: period,
+        key: 'roma',
+        title: title,
+        time: time,
+        img: '',
+        wiki: '',
+        alt: title
+      });
+
+      closeInfoModal();
+      renderAgenda();
+      triggerHaptic('success');
+      showToast(`'${title}' adicionado ao itinerário!`);
+      if (speechEnabled) speakText(`${title} foi adicionado à agenda com sucesso`);
+    };
+
+    window.openBookingModal = function() {
+      openInfoModal(
+        `Reserva: ${currentDestinationName}`,
+        `<p style="margin-bottom:12px;">Selecione os detalhes de acessibilidade para sua visita:</p>
+         <div class="form-group">
+           <label for="book-tickets">Quantidade de Ingressos</label>
+           <select id="book-tickets">
+             <option value="1">1 Ingresso (Individual)</option>
+             <option value="2">2 Ingressos (Com acompanhante PCD)</option>
+             <option value="3">3 Ingressos ou mais</option>
+           </select>
+         </div>
+         <div class="form-group">
+           <label for="book-a11y-need">Necessidade de Acessibilidade</label>
+           <select id="book-a11y-need">
+             <option value="cadeira">Cadeira de Rodas / Rampa</option>
+             <option value="audio">Audioguia e Descrição Sonora</option>
+             <option value="libras">Intérprete de Libras / Sinais</option>
+             <option value="nenhuma">Sem necessidade específica</option>
+           </select>
+         </div>`,
+        `<button class="btn-primary ripple-target" onclick="confirmBooking()">CONFIRMAR RESERVA</button>`
+      );
+    };
+
+    window.confirmBooking = function() {
+      closeInfoModal();
+      triggerHaptic('success');
+      showToast('Reserva confirmada com voucher acessível!');
+      if (speechEnabled) speakText('Reserva realizada com sucesso. O voucher está disponível no perfil.');
+    };
+
+    window.openEmergencyModal = function() {
+      openInfoModal(
+        'Central de Ajuda e SOS Global',
+        `<p style="color:#ef4444; font-weight:bold; margin-bottom:12px;">Precisa de assistência imediata no seu destino?</p>
+         <button class="btn-primary ripple-target" style="background:#ef4444; color:#fff; margin-bottom:8px;" onclick="showToast('Compartilhando localização de emergência...'); closeInfoModal();">
+           <i class="fa-solid fa-location-crosshairs"></i> Enviar Minha Localização
+         </button>
+         <button class="btn-primary ripple-target" style="background:var(--accent-orange); color:#020617;" onclick="showToast('Conectando ao assistente de voz rápida...'); closeInfoModal();">
+           <i class="fa-solid fa-microphone-lines"></i> Falar com Assistente IA
+         </button>`
+      );
+    };
+
+    window.openInfoModal = function(title, bodyHtml, actionBtnHtml) {
+      triggerHaptic('medium');
+      document.getElementById('info-modal-title').textContent = title;
+      document.getElementById('info-modal-body').innerHTML = bodyHtml;
+      const actions = document.getElementById('info-modal-actions');
+      if (actionBtnHtml) {
+        actions.innerHTML = actionBtnHtml;
+      } else {
+        actions.innerHTML = `<button class="btn-primary ripple-target" onclick="closeInfoModal()">ENTENDIDO</button>`;
+      }
+      document.getElementById('info-modal').classList.add('active');
+    };
+
+    window.closeInfoModal = function() {
+      triggerHaptic('light');
+      document.getElementById('info-modal').classList.remove('active');
+    };
+
+    window.openMapPinModal = function(name, status, desc, detailKey) {
+      const actionHtml = detailKey ? 
+        `<button class="btn-primary ripple-target" onclick="closeInfoModal(); showDestinationDetail('${detailKey}')">VER DETALHES COMPLETOS</button>` :
+        `<button class="btn-primary ripple-target" onclick="closeInfoModal()">FECHAR</button>`;
+
+      openInfoModal(
+        name,
+        `<p style="margin-bottom:8px;"><strong>Status:</strong> <span style="color:var(--primary);">${status}</span></p>
+         <p>${desc}</p>`,
+        actionHtml
+      );
+    };
+
+    window.openNotificationsModal = function() {
+      openInfoModal(
+        'Notificações',
+        `<ul style="list-style: none; padding: 0;">
+          <li style="padding: 8px 0; border-bottom: 1px solid var(--card-border);">
+            <strong style="color:var(--primary);">Sua Viagem para Roma:</strong> Faltam 3 dias! Todas as reservas foram confirmadas.
+          </li>
+          <li style="padding: 8px 0;">
+            <strong style="color:var(--accent-green);">Atualização:</strong> Novo horário de funcionamento no Fórum Romano.
+          </li>
+        </ul>`
+      );
+    };
+
+    window.openTripsModal = function() {
+      openInfoModal(
+        'Minhas Viagens',
+        `<div class="card" style="margin-bottom:10px;">
+          <h4 style="color:var(--primary);">Roma & Florença, Itália 🇮🇹</h4>
+          <p style="font-size:0.8rem; color:var(--text-muted);">14 a 18 de Outubro • Voo e hotel reservados com acessibilidade.</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--accent-green);">Paris, França 🇫🇷</h4>
+          <p style="font-size:0.8rem; color:var(--text-muted);">12 a 18 de Dezembro • Hotel e passeios agendados.</p>
+        </div>`
+      );
+    };
+
+    window.openSupportModal = function() {
+      openInfoModal(
+        'Atendimento e Suporte',
+        `<p style="margin-bottom:12px;">Precisa de auxílio ou atendimento sobre sua viagem?</p>
+         <button class="btn-primary ripple-target" style="background:var(--accent-green); color:#020617; margin-bottom:8px;" onclick="showToast('Iniciando atendimento por vídeo...'); closeInfoModal();">
+           <i class="fa-solid fa-headset"></i> Atendimento por Vídeo
+         </button>
+         <button class="btn-primary ripple-target" onclick="showToast('Ligando para a Central GoTrip...'); closeInfoModal();">
+           <i class="fa-solid fa-phone"></i> Ligar para Central 24h
+         </button>`
+      );
+    };
+
+    window.toggleReportModal = function() {
+      triggerHaptic('light');
+      const modal = document.getElementById('report-modal');
+      if (modal) modal.classList.toggle('active');
+    };
+
+    window.showToast = function(message) {
+      const toast = document.getElementById('toast-notification');
+      const msg = document.getElementById('toast-message');
+      if (toast && msg) {
+        msg.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(100px)';
+        }, 2800);
+      }
+    };
+
+    // MICROINTERACTION: Dynamic Ripple Effect Listener
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('.ripple-target');
+      if (!target || reduceMotionEnabled) return;
+
+      const rect = target.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-effect';
+      
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+
+    // Attach click listeners to read elements automatically when TTS is enabled
+    document.addEventListener('click', (e) => {
+      if (!speechEnabled) return;
+      const target = e.target.closest('[aria-label], button, a, h1, h2, h3, h4, p, label');
+      if (target && !e.target.closest('#tts-banner')) {
+        const textToRead = target.getAttribute('aria-label') || target.innerText || target.placeholder;
+        if (textToRead) speakText(textToRead);
+      }
+    });
+
+    // Carrega as fotos dos destinos extras (Wikipédia) e guarda para a tela de detalhes
+    function loadHotImages() {
+      document.querySelectorAll('#destinations-container .destination-item').forEach(card => {
+        const m = (card.getAttribute('onclick') || '').match(/showDestinationDetail\('([^']+)'\)/);
+        const key = card.getAttribute('data-key') || (m && m[1]);
+        if (!key) return;
+        const img = card.querySelector('.card-img');
+        const title = (card.querySelector('.dest-title')?.textContent || '').trim();
+        if ((img.getAttribute('src') || '').startsWith('data:image/svg+xml;utf8,<svg')) setImg(img, placeholderFor(title));
+        const wiki = card.getAttribute('data-wiki') || PLACE_WIKI[key];
+        fetchPlaceImage(wiki, title.split(',')[0]).then(src => {
+          if (!src) return;
+          setImg(img, src);
+          if (destinationData[key]) { destinationData[key].img = src; destinationData[key].imgDone = true; }
+        });
+      });
+    }
+
+    // MICROINTERACTION: duplo toque no card favorita (um toque abre os detalhes)
+    (function setupDoubleTapFavorite() {
+      let lastCard = null, lastTime = 0, pendingTimer = null;
+      const DELAY = 280;
+
+      function burst(x, y) {
+        if (reduceMotionEnabled) return;
+        const big = document.createElement('i');
+        big.className = 'fa-solid fa-heart heart-burst';
+        big.style.left = x + 'px'; big.style.top = y + 'px';
+        big.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(big);
+        setTimeout(() => big.remove(), 900);
+        for (let i = 0; i < 6; i++) {
+          const m = document.createElement('i');
+          const ang = (Math.PI * 2 * i) / 6 + Math.random() * 0.5;
+          const dist = 50 + Math.random() * 40;
+          m.className = 'fa-solid fa-heart heart-mini';
+          m.style.left = x + 'px'; m.style.top = y + 'px';
+          m.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+          m.style.setProperty('--dy', Math.sin(ang) * dist - 20 + 'px');
+          m.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(m);
+          setTimeout(() => m.remove(), 900);
+        }
+      }
+
+      function openDetail(card) {
+        const m = (card.getAttribute('onclick') || '').match(/showDestinationDetail\('([^']+)'\)/);
+        if (m) showDestinationDetail(m[1]);
+      }
+
+      function likeCard(card, x, y) {
+        const btn = card.querySelector('.fav-btn');
+        burst(x, y);
+        if (btn && !btn.classList.contains('active')) {
+          btn.click(); // reaproveita a lógica de favoritar (toast, voz, vibração)
+          btn.classList.add('pop');
+          setTimeout(() => btn.classList.remove('pop'), 500);
+        } else {
+          triggerHaptic('success');
+          showToast('Já está nos seus Favoritos ❤️');
+        }
+      }
+
+      document.addEventListener('click', (e) => {
+        const card = e.target.closest('.destination-item');
+        if (!card || e.target.closest('.fav-btn')) return;
+        e.stopPropagation(); // controlamos a abertura dos detalhes aqui
+        e.preventDefault();
+        const now = Date.now();
+        if (lastCard === card && now - lastTime < DELAY + 150) {
+          clearTimeout(pendingTimer);
+          lastCard = null; lastTime = 0;
+          likeCard(card, e.clientX, e.clientY);
+          return;
+        }
+        lastCard = card; lastTime = now;
+        clearTimeout(pendingTimer);
+        pendingTimer = setTimeout(() => { lastCard = null; openDetail(card); }, DELAY);
+      }, true);
+
+      // Dica única
+      setTimeout(() => { try { showToast('Dica: toque duas vezes em um destino para favoritar ❤️'); } catch (e) {} }, 2500);
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      window.showScreen('screen-home');
+      renderAgenda();
+      loadHotImages();
+    });
+
+    // Fallback: se uma imagem não carregar, mostra uma imagem com o nome do lugar
+    document.addEventListener('error', (e) => {
+      const img = e.target;
+      if (!(img instanceof HTMLImageElement) || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      img.src = placeholderFor(img.alt || img.closest('article')?.querySelector('h4')?.textContent);
+    }, true);
+  </script>
+</body>
+</html>
